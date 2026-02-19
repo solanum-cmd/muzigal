@@ -1,5 +1,8 @@
-import React from 'react';
+"use client";
+
+import React, { useState } from 'react';
 import Image from 'next/image';
+import TeacherJoinModal from '../ui/TeacherJoinModal';
 
 /**
  * TeacherConversion Section
@@ -9,6 +12,7 @@ import Image from 'next/image';
  * circular teacher action photos, and the "Join Muzigal Family" CTA button.
  */
 export default function TeacherConversion() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const assets = [
     "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/test-clones/7a0a4157-60ba-4281-905f-75b4412e621a-muzigal-com/assets/images/fb-review-2902516480006762-1630651737-12.jpg",
     "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/test-clones/7a0a4157-60ba-4281-905f-75b4412e621a-muzigal-com/assets/images/fb-review-4420449024713333-1630905670-13.jpg",
@@ -66,18 +70,20 @@ export default function TeacherConversion() {
 
         {/* CTA Button */}
         <div className="mt-4">
-          <a
-            href="https://muzigal.com/teach-with-us"
+          <button
+            onClick={() => setIsModalOpen(true)}
             className="inline-block bg-[#d63384] text-white font-semibold text-[16px] py-[14px] px-[36px] rounded-[4px] hover:opacity-90 transition-opacity duration-300 ga-teacher-cta"
           >
             Join Muzigal Family
-          </a>
+          </button>
         </div>
       </div>
 
       {/* Background Decorative Elements - Subtle Blob/Circle Pattern */}
       <div className="absolute top-[-100px] left-[-100px] w-[300px] h-[300px] bg-[#301a4e] rounded-full opacity-20 blur-3xl pointer-events-none"></div>
       <div className="absolute bottom-[-150px] right-[-50px] w-[400px] h-[400px] bg-[#d63384] rounded-full opacity-10 blur-3xl pointer-events-none"></div>
+
+      <TeacherJoinModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </section>
   );
 }

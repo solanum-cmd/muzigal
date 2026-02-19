@@ -16,8 +16,8 @@ export async function POST(req: NextRequest) {
             if (!teacherId || !teacherName) {
                 return NextResponse.json({ error: "Missing teacher details" }, { status: 400 });
             }
-        } else if (type === 'franchise') {
-            // Franchise enquiry only needs basic fields which are already checked
+        } else if (type === 'franchise' || type === 'teacher_join') {
+            // Franchise and Teacher Join enquiries only need basic fields which are already checked
         } else {
             // Default to academy if type is missing or 'academy'
             if (!academyId || !academyName) {

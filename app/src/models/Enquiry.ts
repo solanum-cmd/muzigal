@@ -9,7 +9,7 @@ const EnquirySchema = new mongoose.Schema({
     academyName: { type: String },
     teacherId: { type: Number },
     teacherName: { type: String },
-    type: { type: String, enum: ['academy', 'teacher', 'franchise'], default: 'academy' },
+    type: { type: String, enum: ['academy', 'teacher', 'franchise', 'teacher_join'], default: 'academy' },
     createdAt: { type: Date, default: Date.now },
 });
 

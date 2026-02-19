@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight, Check } from "lucide-react";
 import Link from "next/link";
@@ -35,14 +35,13 @@ const experienceLevels = ["Complete Beginner", "Some Experience", "Intermediate"
 const teachingLanguages = ["English", "Hindi", "Tamil", "Telugu", "Kannada", "Malayalam", "Bengali", "Marathi"];
 const ageGroups = ["3-5 years", "5-10 years", "10-20 years", "20-50 years", "50+ years"];
 
-type Step = "phone" | "otp" | "profile" | "subject" | "preferences" | "success";
+type Step = "phone" | "profile" | "subject" | "preferences" | "success";
 
 export default function LoginPage() {
   const { refreshUser } = useAuth();
   const [step, setStep] = useState<Step>("phone");
   const [countryCode, setCountryCode] = useState(countryCodes[0]);
   const [phone, setPhone] = useState("");
-  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -50,22 +49,7 @@ export default function LoginPage() {
   const [selectedLevel, setSelectedLevel] = useState("");
   const [selectedLanguage, setSelectedLanguage] = useState("");
   const [selectedAge, setSelectedAge] = useState("");
-
-  const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
-
-  const handleOtpChange = (index: number, value: string) => {
-    if (!/^\d*$/.test(value)) return;
-    const newOtp = [...otp];
-    newOtp[index] = value.slice(-1);
-    setOtp(newOtp);
-    if (value && index < 5) otpRefs.current[index + 1]?.focus();
-  };
-
-  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent) => {
-    if (e.key === "Backspace" && !otp[index] && index > 0) {
-      otpRefs.current[index - 1]?.focus();
-    }
-  };
+  const [loading, setLoading] = useState(false);
 
   const toggleInstrument = (name: string) => {
     setSelectedInstruments((prev) =>
@@ -73,8 +57,50 @@ export default function LoginPage() {
     );
   };
 
-  const stepNumber = { phone: 1, otp: 1, profile: 2, subject: 3, preferences: 4, success: 5 }[step];
+  const stepNumber = { phone: 1, profile: 2, subject: 3, preferences: 4, success: 5 }[step];
   const totalSteps = 4;
+
+  const handlePhoneSubmit = async () => {
+    if (phone.length < 10) return;
+    setLoading(true);
+    try {
+      // Check if user exists
+      const res = await fetch('/api/auth/check-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.exists) {
+          // User exists, login directly
+          const loginRes = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone })
+          });
+
+          if (loginRes.ok) {
+            await refreshUser();
+            window.location.href = '/';
+          } else {
+            alert("Login failed");
+          }
+        } else {
+          // User doesn't exist, go to profile creation
+          setStep("profile");
+        }
+      } else {
+        alert("Something went wrong");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Something went wrong");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#1a0b2e] via-[#132742] to-[#0d1f36] flex flex-col">
@@ -86,7 +112,7 @@ export default function LoginPage() {
         {step !== "phone" && step !== "success" && (
           <button
             onClick={() => {
-              const prev: Record<Step, Step> = { phone: "phone", otp: "phone", profile: "otp", subject: "profile", preferences: "subject", success: "preferences" };
+              const prev: Record<Step, Step> = { phone: "phone", profile: "phone", subject: "profile", preferences: "subject", success: "preferences" };
               setStep(prev[step]);
             }}
             className="flex items-center gap-1 text-white/70 hover:text-white text-[14px] transition-colors"
@@ -148,102 +174,17 @@ export default function LoginPage() {
               </div>
 
               <button
-                onClick={async () => {
-                  if (phone.length >= 10) {
-                    try {
-                      const res = await fetch('/api/auth/check-user', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ phone })
-                      });
-                      const data = await res.json();
-                      // If user exists, we will eventually login. If not, we will register.
-                      // For now, proceed to OTP.
-                      setStep("otp");
-                    } catch (e) {
-                      console.error(e);
-                      alert("Something went wrong");
-                    }
-                  }
-                }}
-                disabled={phone.length < 10}
+                onClick={handlePhoneSubmit}
+                disabled={phone.length < 10 || loading}
                 className="w-full bg-[#d63384] hover:bg-[#b5296e] disabled:bg-[#f0a8c8] text-white font-bold py-3.5 rounded-xl text-[16px] transition-colors"
               >
-                Send OTP
+                {loading ? "Checking..." : "Continue"}
               </button>
 
               <p className="text-[12px] text-[#6b7280] text-center mt-4">
                 By continuing, you agree to our{" "}
                 <a href="#" className="text-[#d63384] hover:underline">Terms</a> &{" "}
                 <a href="#" className="text-[#d63384] hover:underline">Privacy Policy</a>
-              </p>
-            </div>
-          )}
-
-          {/* STEP 1b: OTP */}
-          {step === "otp" && (
-            <div>
-              <h2 className="text-[24px] font-bold text-[#132742] mb-1">Verify OTP</h2>
-              <p className="text-[#6b7280] text-[14px] mb-2">
-                Enter the 6-digit code sent to <span className="font-semibold text-[#132742]">{countryCode.code} {phone}</span>
-              </p>
-              <button onClick={() => setStep("phone")} className="text-[13px] text-[#d63384] hover:underline mb-7">Change number</button>
-
-              <div className="flex gap-2 justify-center mb-6">
-                {otp.map((digit, i) => (
-                  <input
-                    key={i}
-                    ref={(el) => { otpRefs.current[i] = el; }}
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={1}
-                    value={digit}
-                    onChange={(e) => handleOtpChange(i, e.target.value)}
-                    onKeyDown={(e) => handleOtpKeyDown(i, e)}
-                    className="w-12 h-12 text-center text-[20px] font-bold border-2 border-[#e0e0e0] rounded-xl text-[#132742] focus:outline-none focus:border-[#d63384] transition-colors"
-                  />
-                ))}
-              </div>
-
-              <button
-                onClick={async () => {
-                  if (otp.every((d) => d)) {
-                    // Start Verification
-                    // Check if user exists again or rely on state. 
-                    // Let's try to login. If 404, go to profile (register).
-                    try {
-                      const res = await fetch('/api/auth/login', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ phone })
-                      });
-
-                      if (res.ok) {
-                        // Login successful
-                        await refreshUser();
-                        window.location.href = '/'; // Redirect to shop or home
-                      } else if (res.status === 404) {
-                        // User not found, go to profile creation
-                        setStep("profile");
-                      } else {
-                        alert("Verify failed");
-                      }
-                    } catch (e) {
-                      // If login fails (e.g. 404), we assume we need to register? 
-                      // Actually fetch won't throw on 404, so we handle above.
-                      console.error(e);
-                    }
-                  }
-                }}
-                disabled={!otp.every((d) => d)}
-                className="w-full bg-[#d63384] hover:bg-[#b5296e] disabled:bg-[#f0a8c8] text-white font-bold py-3.5 rounded-xl text-[16px] transition-colors"
-              >
-                Verify & Continue
-              </button>
-
-              <p className="text-center text-[13px] text-[#6b7280] mt-4">
-                Didn&apos;t receive OTP?{" "}
-                <button className="text-[#d63384] font-semibold hover:underline">Resend</button>
               </p>
             </div>
           )}
@@ -292,6 +233,7 @@ export default function LoginPage() {
               <button
                 onClick={async () => {
                   if (firstName && lastName && email) {
+                    setLoading(true);
                     try {
                       const res = await fetch('/api/auth/register', {
                         method: 'POST',
@@ -308,13 +250,15 @@ export default function LoginPage() {
                     } catch (e) {
                       console.error(e);
                       alert("Error registering");
+                    } finally {
+                      setLoading(false);
                     }
                   }
                 }}
-                disabled={!firstName || !lastName || !email}
+                disabled={!firstName || !lastName || !email || loading}
                 className="w-full bg-[#d63384] hover:bg-[#b5296e] disabled:bg-[#f0a8c8] text-white font-bold py-3.5 rounded-xl text-[16px] transition-colors"
               >
-                Continue
+                {loading ? "Registering..." : "Continue"}
               </button>
             </div>
           )}

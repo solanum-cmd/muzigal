@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowRight } from 'lucide-react';
 
@@ -19,7 +20,7 @@ const Certifications = () => {
     <section className="py-[80px] bg-white overflow-hidden">
       <div className="container max-w-[1200px] mx-auto px-6">
         <div className="flex flex-col gap-[100px]">
-          
+
           {/* First Row: Global Certification Courses */}
           <div className="flex flex-col lg:flex-row items-center justify-between gap-12 lg:gap-20">
             {/* Image Composition - Left */}
@@ -52,13 +53,13 @@ const Certifications = () => {
                 <a href="/learn-music?certificates[]=3" className="text-[#D63384] hover:underline font-medium">ABRSM</a> and{' '}
                 <a href="/learn-music?certificates[]=2" className="text-[#D63384] hover:underline font-medium">Rockschool</a>
               </p>
-              <a 
-                href="https://muzigal.com/find-an-academy" 
+              <Link
+                href="/find-an-academy"
                 className="inline-flex items-center gap-2 text-[#D63384] font-semibold text-[16px] hover:translate-x-1 transition-transform"
               >
                 Find an Academy
                 <ArrowRight size={20} />
-              </a>
+              </Link>
             </div>
           </div>
 
@@ -93,13 +94,13 @@ const Certifications = () => {
                 <a href="/learn-music?learningGoals[]=2" className="text-[#D63384] hover:underline font-medium">Music Theory</a> and{' '}
                 <a href="/learn-music?learningGoals[]=2" className="text-[#D63384] hover:underline font-medium">Improve your Technique</a>
               </p>
-              <a 
-                href="https://muzigal.com/find-an-academy" 
+              <Link
+                href="/find-an-academy"
                 className="inline-flex items-center gap-2 text-[#D63384] font-semibold text-[16px] hover:translate-x-1 transition-transform"
               >
                 Find an Academy
                 <ArrowRight size={20} />
-              </a>
+              </Link>
             </div>
           </div>
 
