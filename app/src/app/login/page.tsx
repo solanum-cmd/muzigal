@@ -4,6 +4,7 @@ import React, { useState, useRef } from "react";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight, Check } from "lucide-react";
 import Link from "next/link";
+import { useAuth } from "@/context/AuthContext";
 
 const countryCodes = [
   { code: "+91", flag: "🇮🇳", name: "India" },
@@ -37,6 +38,7 @@ const ageGroups = ["3-5 years", "5-10 years", "10-20 years", "20-50 years", "50+
 type Step = "phone" | "otp" | "profile" | "subject" | "preferences" | "success";
 
 export default function LoginPage() {
+  const { refreshUser } = useAuth();
   const [step, setStep] = useState<Step>("phone");
   const [countryCode, setCountryCode] = useState(countryCodes[0]);
   const [phone, setPhone] = useState("");
@@ -102,9 +104,8 @@ export default function LoginPage() {
               {Array.from({ length: totalSteps }).map((_, i) => (
                 <div
                   key={i}
-                  className={`h-1 flex-1 rounded-full transition-all duration-500 ${
-                    i + 1 <= stepNumber ? "bg-[#d63384]" : "bg-white/20"
-                  }`}
+                  className={`h-1 flex-1 rounded-full transition-all duration-500 ${i + 1 <= stepNumber ? "bg-[#d63384]" : "bg-white/20"
+                    }`}
                 />
               ))}
             </div>
@@ -147,7 +148,24 @@ export default function LoginPage() {
               </div>
 
               <button
-                onClick={() => phone.length >= 10 && setStep("otp")}
+                onClick={async () => {
+                  if (phone.length >= 10) {
+                    try {
+                      const res = await fetch('/api/auth/check-user', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ phone })
+                      });
+                      const data = await res.json();
+                      // If user exists, we will eventually login. If not, we will register.
+                      // For now, proceed to OTP.
+                      setStep("otp");
+                    } catch (e) {
+                      console.error(e);
+                      alert("Something went wrong");
+                    }
+                  }
+                }}
                 disabled={phone.length < 10}
                 className="w-full bg-[#d63384] hover:bg-[#b5296e] disabled:bg-[#f0a8c8] text-white font-bold py-3.5 rounded-xl text-[16px] transition-colors"
               >
@@ -188,7 +206,35 @@ export default function LoginPage() {
               </div>
 
               <button
-                onClick={() => otp.every((d) => d) && setStep("profile")}
+                onClick={async () => {
+                  if (otp.every((d) => d)) {
+                    // Start Verification
+                    // Check if user exists again or rely on state. 
+                    // Let's try to login. If 404, go to profile (register).
+                    try {
+                      const res = await fetch('/api/auth/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ phone })
+                      });
+
+                      if (res.ok) {
+                        // Login successful
+                        await refreshUser();
+                        window.location.href = '/'; // Redirect to shop or home
+                      } else if (res.status === 404) {
+                        // User not found, go to profile creation
+                        setStep("profile");
+                      } else {
+                        alert("Verify failed");
+                      }
+                    } catch (e) {
+                      // If login fails (e.g. 404), we assume we need to register? 
+                      // Actually fetch won't throw on 404, so we handle above.
+                      console.error(e);
+                    }
+                  }
+                }}
                 disabled={!otp.every((d) => d)}
                 className="w-full bg-[#d63384] hover:bg-[#b5296e] disabled:bg-[#f0a8c8] text-white font-bold py-3.5 rounded-xl text-[16px] transition-colors"
               >
@@ -244,7 +290,27 @@ export default function LoginPage() {
               </div>
 
               <button
-                onClick={() => (firstName && lastName && email) && setStep("subject")}
+                onClick={async () => {
+                  if (firstName && lastName && email) {
+                    try {
+                      const res = await fetch('/api/auth/register', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ phone, firstName, lastName, email })
+                      });
+
+                      if (res.ok) {
+                        await refreshUser();
+                        setStep("subject");
+                      } else {
+                        alert("Registration failed");
+                      }
+                    } catch (e) {
+                      console.error(e);
+                      alert("Error registering");
+                    }
+                  }
+                }}
                 disabled={!firstName || !lastName || !email}
                 className="w-full bg-[#d63384] hover:bg-[#b5296e] disabled:bg-[#f0a8c8] text-white font-bold py-3.5 rounded-xl text-[16px] transition-colors"
               >
@@ -264,11 +330,10 @@ export default function LoginPage() {
                   <button
                     key={inst.name}
                     onClick={() => toggleInstrument(inst.name)}
-                    className={`flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl border-2 transition-all ${
-                      selectedInstruments.includes(inst.name)
-                        ? "border-[#d63384] bg-[#fce4ef]"
-                        : "border-[#e0e0e0] bg-white hover:border-[#d63384]/50"
-                    }`}
+                    className={`flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl border-2 transition-all ${selectedInstruments.includes(inst.name)
+                      ? "border-[#d63384] bg-[#fce4ef]"
+                      : "border-[#e0e0e0] bg-white hover:border-[#d63384]/50"
+                      }`}
                   >
                     <span className="text-[24px]">{inst.icon}</span>
                     <span className="text-[12px] font-semibold text-[#132742] text-center">{inst.name}</span>
@@ -304,9 +369,8 @@ export default function LoginPage() {
                       <button
                         key={l}
                         onClick={() => setSelectedLevel(l)}
-                        className={`py-2 px-3 rounded-lg border-2 text-[13px] font-medium transition-all ${
-                          selectedLevel === l ? "border-[#d63384] bg-[#fce4ef] text-[#d63384]" : "border-[#e0e0e0] text-[#132742] hover:border-[#d63384]/50"
-                        }`}
+                        className={`py-2 px-3 rounded-lg border-2 text-[13px] font-medium transition-all ${selectedLevel === l ? "border-[#d63384] bg-[#fce4ef] text-[#d63384]" : "border-[#e0e0e0] text-[#132742] hover:border-[#d63384]/50"
+                          }`}
                       >
                         {l}
                       </button>
@@ -322,9 +386,8 @@ export default function LoginPage() {
                       <button
                         key={l}
                         onClick={() => setSelectedLanguage(l)}
-                        className={`py-1.5 px-3 rounded-full border text-[13px] font-medium transition-all ${
-                          selectedLanguage === l ? "border-[#d63384] bg-[#fce4ef] text-[#d63384]" : "border-[#e0e0e0] text-[#132742] hover:border-[#d63384]/50"
-                        }`}
+                        className={`py-1.5 px-3 rounded-full border text-[13px] font-medium transition-all ${selectedLanguage === l ? "border-[#d63384] bg-[#fce4ef] text-[#d63384]" : "border-[#e0e0e0] text-[#132742] hover:border-[#d63384]/50"
+                          }`}
                       >
                         {l}
                       </button>
@@ -340,9 +403,8 @@ export default function LoginPage() {
                       <button
                         key={a}
                         onClick={() => setSelectedAge(a)}
-                        className={`py-1.5 px-3 rounded-full border text-[13px] font-medium transition-all ${
-                          selectedAge === a ? "border-[#d63384] bg-[#fce4ef] text-[#d63384]" : "border-[#e0e0e0] text-[#132742] hover:border-[#d63384]/50"
-                        }`}
+                        className={`py-1.5 px-3 rounded-full border text-[13px] font-medium transition-all ${selectedAge === a ? "border-[#d63384] bg-[#fce4ef] text-[#d63384]" : "border-[#e0e0e0] text-[#132742] hover:border-[#d63384]/50"
+                          }`}
                       >
                         {a}
                       </button>

@@ -7,128 +7,39 @@ const Header = dynamic(() => import("@/components/sections/Header"), { ssr: fals
 const Footer = dynamic(() => import("@/components/sections/Footer"), { ssr: false });
 import { Search, MapPin, Phone, Star, ChevronRight } from "lucide-react";
 import Image from "next/image";
+import { useRouter, useSearchParams } from "next/navigation";
 
-const states = [
-  "Andhra Pradesh", "Karnataka", "Kerala", "Maharashtra", "Tamil Nadu",
-  "Telangana", "Delhi", "Gujarat", "Rajasthan", "West Bengal",
-  "Uttar Pradesh", "Punjab", "Haryana", "Madhya Pradesh", "Odisha",
-];
+import { states, citiesByState, areasByCity, academies } from "@/lib/mockData";
 
-const citiesByState: Record<string, string[]> = {
-  "Karnataka": ["Bangalore", "Mysore", "Hubli", "Mangalore", "Belgaum"],
-  "Tamil Nadu": ["Chennai", "Coimbatore", "Madurai", "Salem", "Trichy"],
-  "Maharashtra": ["Mumbai", "Pune", "Nagpur", "Nashik", "Aurangabad"],
-  "Telangana": ["Hyderabad", "Warangal", "Nizamabad", "Karimnagar"],
-  "Kerala": ["Kochi", "Thiruvananthapuram", "Kozhikode", "Thrissur"],
-  "Andhra Pradesh": ["Visakhapatnam", "Vijayawada", "Guntur", "Nellore"],
-  "Delhi": ["New Delhi", "Dwarka", "Rohini", "Saket", "Lajpat Nagar"],
-  "Gujarat": ["Ahmedabad", "Surat", "Vadodara", "Rajkot"],
-  "West Bengal": ["Kolkata", "Howrah", "Durgapur", "Asansol"],
-  "Uttar Pradesh": ["Lucknow", "Kanpur", "Agra", "Varanasi", "Noida"],
-  "Rajasthan": ["Jaipur", "Jodhpur", "Udaipur", "Kota"],
-  "Punjab": ["Chandigarh", "Amritsar", "Ludhiana", "Jalandhar"],
-  "Haryana": ["Gurugram", "Faridabad", "Hisar", "Panipat"],
-  "Madhya Pradesh": ["Bhopal", "Indore", "Gwalior", "Jabalpur"],
-  "Odisha": ["Bhubaneswar", "Cuttack", "Rourkela"],
-};
+import EnquiryModal from "@/components/ui/EnquiryModal";
+import FranchiseEnquiryModal from "@/components/ui/FranchiseEnquiryModal";
 
-const areasByCity: Record<string, string[]> = {
-  "Bangalore": ["Indiranagar", "Koramangala", "Whitefield", "Jayanagar", "HSR Layout", "Marathahalli", "BTM Layout", "Rajajinagar"],
-  "Mumbai": ["Andheri", "Bandra", "Powai", "Thane", "Borivali", "Malad"],
-  "Chennai": ["Anna Nagar", "T. Nagar", "Adyar", "Velachery", "Mylapore"],
-  "Hyderabad": ["Banjara Hills", "Jubilee Hills", "Madhapur", "Gachibowli", "Kondapur"],
-  "Pune": ["Koregaon Park", "Baner", "Kothrud", "Viman Nagar", "Hadapsar"],
-  "Delhi": ["Saket", "Lajpat Nagar", "Dwarka", "Rohini", "Vasant Kunj"],
-  "New Delhi": ["Saket", "Lajpat Nagar", "Dwarka", "Rohini", "Vasant Kunj"],
-  "Kochi": ["Kakkanad", "Edapally", "Palarivattom", "Aluva"],
-};
+export default function Page() {
+  return (
+    <React.Suspense fallback={<div>Loading...</div>}>
+      <FindAnAcademyPage />
+    </React.Suspense>
+  );
+}
 
-const academies = [
-  {
-    id: 1,
-    name: "Muzigal Academy - Indiranagar",
-    address: "1st Floor, 100 Feet Road, Indiranagar, Bangalore - 560038",
-    area: "Indiranagar",
-    city: "Bangalore",
-    state: "Karnataka",
-    phone: "+91 98765 43210",
-    rating: 4.8,
-    reviews: 124,
-    subjects: ["Guitar", "Piano", "Keyboard", "Vocals", "Drums"],
-    image: "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=400&q=80",
-  },
-  {
-    id: 2,
-    name: "Muzigal Academy - Koramangala",
-    address: "3rd Cross, 5th Block, Koramangala, Bangalore - 560095",
-    area: "Koramangala",
-    city: "Bangalore",
-    state: "Karnataka",
-    phone: "+91 98765 43211",
-    rating: 4.7,
-    reviews: 98,
-    subjects: ["Guitar", "Violin", "Piano", "Carnatic Vocals"],
-    image: "https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=400&q=80",
-  },
-  {
-    id: 3,
-    name: "Muzigal Academy - HSR Layout",
-    address: "27th Main Road, Sector 2, HSR Layout, Bangalore - 560102",
-    area: "HSR Layout",
-    city: "Bangalore",
-    state: "Karnataka",
-    phone: "+91 98765 43212",
-    rating: 4.9,
-    reviews: 156,
-    subjects: ["Drums", "Guitar", "Piano", "Flute", "Tabla"],
-    image: "https://images.unsplash.com/photo-1524230572899-a752b3835840?w=400&q=80",
-  },
-  {
-    id: 4,
-    name: "Muzigal Academy - Anna Nagar",
-    address: "42nd Street, 7th Avenue, Anna Nagar, Chennai - 600040",
-    area: "Anna Nagar",
-    city: "Chennai",
-    state: "Tamil Nadu",
-    phone: "+91 98765 43213",
-    rating: 4.6,
-    reviews: 87,
-    subjects: ["Carnatic Vocals", "Violin", "Mrudangam", "Keyboard"],
-    image: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&q=80",
-  },
-  {
-    id: 5,
-    name: "Muzigal Academy - Banjara Hills",
-    address: "Road No. 12, Banjara Hills, Hyderabad - 500034",
-    area: "Banjara Hills",
-    city: "Hyderabad",
-    state: "Telangana",
-    phone: "+91 98765 43214",
-    rating: 4.8,
-    reviews: 113,
-    subjects: ["Guitar", "Piano", "Vocals", "Drums", "Saxophone"],
-    image: "https://images.unsplash.com/photo-1510915361894-db8b60106cb1?w=400&q=80",
-  },
-  {
-    id: 6,
-    name: "Muzigal Academy - Koregaon Park",
-    address: "Lane 5, Koregaon Park, Pune - 411001",
-    area: "Koregaon Park",
-    city: "Pune",
-    state: "Maharashtra",
-    phone: "+91 98765 43215",
-    rating: 4.7,
-    reviews: 92,
-    subjects: ["Piano", "Guitar", "Keyboard", "Western Vocals"],
-    image: "https://images.unsplash.com/photo-1520523839897-bd0b52f945a0?w=400&q=80",
-  },
-];
-
-export default function FindAnAcademyPage() {
+function FindAnAcademyPage() {
+  const searchParams = useSearchParams();
   const [selectedState, setSelectedState] = useState("");
   const [selectedCity, setSelectedCity] = useState("");
   const [selectedArea, setSelectedArea] = useState("");
+  const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
   const [searched, setSearched] = useState(false);
+  const [enquiryAcademy, setEnquiryAcademy] = useState<(typeof academies)[0] | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isFranchiseModalOpen, setIsFranchiseModalOpen] = useState(false);
+
+  React.useEffect(() => {
+    const query = searchParams.get("q");
+    if (query) {
+      setSearchQuery(query);
+      setSearched(true);
+    }
+  }, [searchParams]);
 
   const cities = selectedState ? (citiesByState[selectedState] || []) : [];
   const areas = selectedCity ? (areasByCity[selectedCity] || []) : [];
@@ -137,6 +48,9 @@ export default function FindAnAcademyPage() {
     if (selectedState && a.state !== selectedState) return false;
     if (selectedCity && a.city !== selectedCity) return false;
     if (selectedArea && a.area !== selectedArea) return false;
+    if (searchQuery && !a.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
+      !a.city.toLowerCase().includes(searchQuery.toLowerCase()) &&
+      !a.area.toLowerCase().includes(searchQuery.toLowerCase())) return false;
     return true;
   });
 
@@ -237,7 +151,14 @@ export default function FindAnAcademyPage() {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {(searched ? filteredAcademies : academies).map((academy) => (
-                    <AcademyCard key={academy.id} academy={academy} />
+                    <AcademyCard
+                      key={academy.id}
+                      academy={academy}
+                      onEnquire={() => {
+                        setEnquiryAcademy(academy);
+                        setIsModalOpen(true);
+                      }}
+                    />
                   ))}
                 </div>
               )}
@@ -252,14 +173,30 @@ export default function FindAnAcademyPage() {
         </div>
       </section>
 
+      {enquiryAcademy && (
+        <EnquiryModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          academy={enquiryAcademy}
+        />
+      )}
+
+      <FranchiseEnquiryModal
+        isOpen={isFranchiseModalOpen}
+        onClose={() => setIsFranchiseModalOpen(false)}
+      />
+
       {/* CTA Banner */}
       <section className="bg-[#d63384] text-white py-12 px-6 text-center">
         <div className="max-w-[700px] mx-auto">
           <h2 className="text-[28px] font-bold mb-3">Want to open a Muzigal Academy?</h2>
           <p className="text-white/80 mb-6">Join our growing network of franchise academies and bring music education to your community</p>
-          <a href="#" className="inline-block bg-white text-[#d63384] font-bold px-8 py-3 rounded-lg hover:bg-white/90 transition-colors">
+          <button
+            onClick={() => setIsFranchiseModalOpen(true)}
+            className="inline-block bg-white text-[#d63384] font-bold px-8 py-3 rounded-lg hover:bg-white/90 transition-colors"
+          >
             Apply for Franchise
-          </a>
+          </button>
         </div>
       </section>
 
@@ -268,7 +205,7 @@ export default function FindAnAcademyPage() {
   );
 }
 
-function AcademyCard({ academy }: { academy: (typeof academies)[0] }) {
+function AcademyCard({ academy, onEnquire }: { academy: (typeof academies)[0]; onEnquire: () => void }) {
   return (
     <div className="bg-white rounded-xl overflow-hidden shadow-[0_2px_12px_rgba(0,0,0,0.08)] hover:shadow-[0_4px_24px_rgba(0,0,0,0.12)] transition-shadow group">
       <div className="relative h-[180px] overflow-hidden">
@@ -307,9 +244,15 @@ function AcademyCard({ academy }: { academy: (typeof academies)[0] }) {
             <Phone size={13} />
             {academy.phone}
           </a>
-          <a href="#" className="flex items-center gap-1 text-[#d63384] font-semibold text-[13px] hover:gap-2 transition-all">
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              onEnquire();
+            }}
+            className="flex items-center gap-1 text-[#d63384] font-semibold text-[13px] hover:gap-2 transition-all"
+          >
             Enquire <ChevronRight size={14} />
-          </a>
+          </button>
         </div>
       </div>
     </div>

@@ -5,161 +5,39 @@ import Header from "@/components/sections/Header";
 import Footer from "@/components/sections/Footer";
 import { Star, Filter, ChevronDown, Search, Clock, Globe, BookOpen, X } from "lucide-react";
 import Image from "next/image";
+import TeacherBookingModal from "@/components/ui/TeacherBookingModal";
 
-const subjects = [
-  "All Subjects", "Acoustic Guitar", "Electric Guitar", "Bass Guitar", "Violin",
-  "Piano", "Keyboard", "Harmonium", "Ukulele", "Drums", "Tabla", "Mrudangam",
-  "Western Vocal", "Carnatic Vocals", "Hindustani Vocals", "Flute", "Saxophone",
-  "Trumpet", "Sitar", "Veena",
-];
+import { subjects, languages, levels, teachers } from "@/lib/mockData";
 
-const languages = ["All Languages", "English", "Hindi", "Tamil", "Telugu", "Kannada", "Malayalam", "Bengali", "Marathi"];
-const levels = ["All Levels", "Beginner", "Intermediate", "Advanced"];
+import { useRouter, useSearchParams } from "next/navigation";
 
-const teachers = [
-  {
-    id: 1,
-    name: "Rahul Sharma",
-    subjects: ["Acoustic Guitar", "Electric Guitar", "Bass Guitar"],
-    languages: ["English", "Hindi"],
-    level: ["Beginner", "Intermediate"],
-    rating: 4.9,
-    reviews: 142,
-    experience: "8 years",
-    price: "₹800/class",
-    trialPrice: "Free",
-    bio: "Professional guitarist with 8+ years of teaching experience. Trained from Trinity College of Music, London.",
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&q=80",
-    badges: ["Trinity Certified", "Top Rated"],
-  },
-  {
-    id: 2,
-    name: "Priya Nair",
-    subjects: ["Piano", "Keyboard"],
-    languages: ["English", "Malayalam", "Tamil"],
-    level: ["Beginner", "Intermediate", "Advanced"],
-    rating: 4.8,
-    reviews: 118,
-    experience: "10 years",
-    price: "₹1000/class",
-    trialPrice: "Free",
-    bio: "ABRSM Grade 8 pianist with a decade of teaching students of all age groups.",
-    image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300&q=80",
-    badges: ["ABRSM Certified", "Top Rated"],
-  },
-  {
-    id: 3,
-    name: "Amit Desai",
-    subjects: ["Drums", "Tabla"],
-    languages: ["English", "Hindi", "Marathi"],
-    level: ["Beginner", "Intermediate"],
-    rating: 4.7,
-    reviews: 96,
-    experience: "6 years",
-    price: "₹750/class",
-    trialPrice: "Free",
-    bio: "Versatile percussionist adept at both Western drums and classical Tabla. Berklee alumnus.",
-    image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&q=80",
-    badges: ["Berklee Alumnus"],
-  },
-  {
-    id: 4,
-    name: "Deepa Krishnan",
-    subjects: ["Carnatic Vocals", "Western Vocal"],
-    languages: ["Tamil", "English", "Telugu"],
-    level: ["Beginner", "Intermediate", "Advanced"],
-    rating: 4.9,
-    reviews: 204,
-    experience: "15 years",
-    price: "₹900/class",
-    trialPrice: "Free",
-    bio: "Renowned Carnatic vocalist and A-grade artist of All India Radio with 15 years of teaching excellence.",
-    image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=300&q=80",
-    badges: ["AIR A-Grade Artist", "Top Rated"],
-  },
-  {
-    id: 5,
-    name: "Sanjay Mehta",
-    subjects: ["Violin", "Sitar"],
-    languages: ["English", "Hindi", "Gujarati"],
-    level: ["Beginner", "Intermediate"],
-    rating: 4.6,
-    reviews: 78,
-    experience: "7 years",
-    price: "₹850/class",
-    trialPrice: "Free",
-    bio: "Classical string musician trained under maestro Pandit Ravi Shankar's disciples.",
-    image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&q=80",
-    badges: ["Classical Expert"],
-  },
-  {
-    id: 6,
-    name: "Meena Pillai",
-    subjects: ["Flute", "Keyboard"],
-    languages: ["Malayalam", "English", "Tamil"],
-    level: ["Beginner", "Intermediate"],
-    rating: 4.8,
-    reviews: 89,
-    experience: "9 years",
-    price: "₹800/class",
-    trialPrice: "Free",
-    bio: "Classical and contemporary flute artist with extensive experience teaching online and offline.",
-    image: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=300&q=80",
-    badges: ["Trinity Certified"],
-  },
-  {
-    id: 7,
-    name: "Kiran Rao",
-    subjects: ["Acoustic Guitar", "Ukulele"],
-    languages: ["Kannada", "English", "Hindi"],
-    level: ["Beginner"],
-    rating: 4.7,
-    reviews: 65,
-    experience: "4 years",
-    price: "₹650/class",
-    trialPrice: "Free",
-    bio: "Specializes in beginner-friendly guitar lessons with a fun and engaging teaching style.",
-    image: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=300&q=80",
-    badges: ["Beginner Specialist"],
-  },
-  {
-    id: 8,
-    name: "Ananya Singh",
-    subjects: ["Hindustani Vocals", "Harmonium"],
-    languages: ["Hindi", "English", "Bengali"],
-    level: ["Beginner", "Intermediate", "Advanced"],
-    rating: 4.9,
-    reviews: 177,
-    experience: "12 years",
-    price: "₹950/class",
-    trialPrice: "Free",
-    bio: "Acclaimed Hindustani vocalist performing at prestigious sabhas across India and abroad.",
-    image: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&q=80",
-    badges: ["National Awardee", "Top Rated"],
-  },
-  {
-    id: 9,
-    name: "Vikram Nambiar",
-    subjects: ["Mrudangam", "Tabla"],
-    languages: ["Malayalam", "Tamil", "English"],
-    level: ["Beginner", "Intermediate", "Advanced"],
-    rating: 4.8,
-    reviews: 103,
-    experience: "11 years",
-    price: "₹880/class",
-    trialPrice: "Free",
-    bio: "Senior Mrudangam artist trained in the Palakkad Mani Iyer tradition. Performed internationally.",
-    image: "https://images.unsplash.com/photo-1463453091185-61582044d556?w=300&q=80",
-    badges: ["Palakkad Tradition"],
-  },
-];
+// Main Page export
+export default function Page() {
+  return (
+    <React.Suspense fallback={<div>Loading...</div>}>
+      <FindATeacherPage />
+    </React.Suspense>
+  );
+}
 
-export default function FindATeacherPage() {
+function FindATeacherPage() {
+  const searchParams = useSearchParams();
+  // ... rest of the component
+
   const [subjectFilter, setSubjectFilter] = useState("All Subjects");
   const [languageFilter, setLanguageFilter] = useState("All Languages");
   const [levelFilter, setLevelFilter] = useState("All Levels");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
   const [showFilters, setShowFilters] = useState(false);
+  const [selectedTeacher, setSelectedTeacher] = useState<(typeof teachers)[0] | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  React.useEffect(() => {
+    const query = searchParams.get("q");
+    if (query !== null) {
+      setSearchQuery(query);
+    }
+  }, [searchParams]);
 
   const filtered = useMemo(() => {
     return teachers.filter((t) => {
@@ -294,18 +172,34 @@ export default function FindATeacherPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filtered.map((t) => <TeacherCard key={t.id} teacher={t} />)}
+              {filtered.map((t) => (
+                <TeacherCard
+                  key={t.id}
+                  teacher={t}
+                  onBookTrial={() => {
+                    setSelectedTeacher(t);
+                    setIsModalOpen(true);
+                  }}
+                />
+              ))}
             </div>
           )}
         </div>
       </section>
 
       <Footer />
+      {selectedTeacher && (
+        <TeacherBookingModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          teacher={selectedTeacher}
+        />
+      )}
     </div>
   );
 }
 
-function TeacherCard({ teacher }: { teacher: (typeof teachers)[0] }) {
+function TeacherCard({ teacher, onBookTrial }: { teacher: (typeof teachers)[0]; onBookTrial: () => void }) {
   return (
     <div className="bg-white rounded-xl overflow-hidden shadow-[0_2px_12px_rgba(0,0,0,0.07)] hover:shadow-[0_6px_24px_rgba(0,0,0,0.12)] transition-shadow">
       {/* Top Section */}
@@ -367,7 +261,10 @@ function TeacherCard({ teacher }: { teacher: (typeof teachers)[0] }) {
           <span className="text-[14px] font-bold text-[#132742]">{teacher.price}</span>
           <span className="text-[12px] text-[#10b981] ml-2 font-medium">Trial: {teacher.trialPrice}</span>
         </div>
-        <button className="bg-[#d63384] hover:bg-[#b5296e] text-white text-[13px] font-semibold px-4 py-2 rounded-lg transition-colors">
+        <button
+          onClick={onBookTrial}
+          className="bg-[#d63384] hover:bg-[#b5296e] text-white text-[13px] font-semibold px-4 py-2 rounded-lg transition-colors"
+        >
           Book Free Trial
         </button>
       </div>
