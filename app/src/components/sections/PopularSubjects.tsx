@@ -74,66 +74,78 @@ const PopularSubjects: React.FC = () => {
   const scroll = (direction: "left" | "right") => {
     if (scrollContainerRef.current) {
       const { scrollLeft, clientWidth } = scrollContainerRef.current;
-      const scrollTo = direction === "left" ? scrollLeft - clientWidth : scrollLeft + clientWidth;
+      const scrollTo = direction === "left" ? scrollLeft - clientWidth * 0.6 : scrollLeft + clientWidth * 0.6;
       scrollContainerRef.current.scrollTo({ left: scrollTo, behavior: "smooth" });
     }
   };
 
   return (
-    <section className="bg-white py-[80px] w-full relative overflow-hidden">
-      {/* Decorative Background Pattern */}
-      <div className="absolute top-0 right-[-100px] w-1/2 h-full bg-blob-pattern opacity-10 pointer-events-none" />
-      
+    <section className="py-20 md:py-24 w-full relative overflow-hidden bg-[#f8fafc]">
+      {/* Subtle decorative elements */}
+      <div className="absolute top-0 right-0 w-[300px] h-[300px] rounded-full opacity-[0.04] bg-[#e11d73] blur-3xl pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-[200px] h-[200px] rounded-full opacity-[0.04] bg-[#8b5cf6] blur-3xl pointer-events-none" />
+
       <div className="container mx-auto max-w-[1200px] px-6">
-        <h2 className="text-[32px] font-bold text-black mb-10 text-center">
-          Popular Subjects
-        </h2>
+        {/* Section Header */}
+        <div className="text-center mb-14">
+          <span className="inline-block text-[12px] font-bold uppercase tracking-[0.12em] text-[#e11d73] mb-3">
+            Explore Instruments
+          </span>
+          <h2 className="text-[32px] md:text-[38px] font-bold text-[#0f172a] leading-tight">
+            Popular Subjects
+          </h2>
+          <p className="text-[#64748b] text-[16px] mt-3 max-w-md mx-auto leading-relaxed">
+            Choose from a wide range of instruments taught by expert teachers
+          </p>
+        </div>
 
         <div className="relative group">
           {/* Navigation Arrows */}
           <button
             onClick={() => scroll("left")}
-            className="absolute left-[-20px] top-1/2 -translate-y-1/2 z-10 w-10 h-10 flex items-center justify-center bg-white rounded-full border border-border shadow-sm hover:shadow-md transition-shadow text-navy/40 hover:text-navy hidden md:flex"
+            className="absolute -left-3 md:-left-5 top-1/2 -translate-y-1/2 z-10 w-11 h-11 flex items-center justify-center bg-white rounded-full border border-[#e2e8f0] shadow-md hover:shadow-lg transition-all duration-300 text-[#64748b] hover:text-[#e11d73] hover:border-[#fce7f3] opacity-0 group-hover:opacity-100 hidden md:flex"
           >
-            <ChevronLeft size={24} strokeWidth={1.5} />
+            <ChevronLeft size={20} strokeWidth={2} />
           </button>
 
           <button
             onClick={() => scroll("right")}
-            className="absolute right-[-20px] top-1/2 -translate-y-1/2 z-10 w-10 h-10 flex items-center justify-center bg-white rounded-full border border-border shadow-sm hover:shadow-md transition-shadow text-navy/40 hover:text-navy hidden md:flex"
+            className="absolute -right-3 md:-right-5 top-1/2 -translate-y-1/2 z-10 w-11 h-11 flex items-center justify-center bg-white rounded-full border border-[#e2e8f0] shadow-md hover:shadow-lg transition-all duration-300 text-[#64748b] hover:text-[#e11d73] hover:border-[#fce7f3] opacity-0 group-hover:opacity-100 hidden md:flex"
           >
-            <ChevronRight size={24} strokeWidth={1.5} />
+            <ChevronRight size={20} strokeWidth={2} />
           </button>
 
           {/* Slider Container */}
           <div
             ref={scrollContainerRef}
-            className="flex gap-6 overflow-x-auto pb-6 scrollbar-hide snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none]"
+            className="flex gap-5 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory"
           >
-            {/* We duplicate the subjects content to allow more scrolling if needed, 
-                though usually, it's a fixed grid or carousel */}
-            <div className="grid grid-rows-3 grid-flow-col gap-6 w-max">
-              {subjects.map((subject) => (
+            <div className="grid grid-rows-3 grid-flow-col gap-4 w-max">
+              {subjects.map((subject, index) => (
                 <a
                   key={subject.id}
                   href={`/learn-music?subjectId=${subject.id}`}
                   className="block group/card"
+                  style={{ animationDelay: `${index * 50}ms` }}
                 >
-                  <div className="flex items-center gap-4 bg-white border border-border rounded-lg p-4 w-[280px] h-[92px] shadow-[0_4px_12px_rgba(0,0,0,0.08)] hover:shadow-md transition-all duration-300 transform group-hover/card:-translate-y-1">
-                    <div className="w-12 h-12 flex-shrink-0 flex items-center justify-center rounded-full bg-[#f0f2f5] overflow-hidden">
+                  <div className="relative flex items-center gap-4 bg-white border border-[#e2e8f0] rounded-2xl p-4 w-[280px] h-[92px] transition-all duration-300 group-hover/card:-translate-y-1 group-hover/card:shadow-[0_8px_30px_rgba(225,29,115,0.08)] group-hover/card:border-[#fce7f3] overflow-hidden">
+                    {/* Hover gradient overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#fce7f3]/0 to-[#fce7f3]/0 group-hover/card:from-[#fce7f3]/30 group-hover/card:to-transparent transition-all duration-300 rounded-2xl" />
+
+                    <div className="relative w-12 h-12 flex-shrink-0 flex items-center justify-center rounded-xl bg-gradient-to-br from-[#f1f5f9] to-[#e2e8f0] group-hover/card:from-[#fce7f3] group-hover/card:to-[#fce7f3]/50 transition-all duration-300 overflow-hidden">
                       <Image
                         src={subject.icon}
                         alt={subject.name}
-                        width={48}
-                        height={48}
-                        className="object-contain"
+                        width={36}
+                        height={36}
+                        className="object-contain relative z-10"
                       />
                     </div>
-                    <div className="flex flex-col">
-                      <span className="text-[16px] font-semibold text-black ">
+                    <div className="flex flex-col relative z-10">
+                      <span className="text-[15px] font-semibold text-[#0f172a] group-hover/card:text-[#e11d73] transition-colors duration-200">
                         {subject.name}
                       </span>
-                      <span className="text-[14px] text-black ">
+                      <span className="text-[13px] text-[#64748b]">
                         {subject.count}
                       </span>
                     </div>
@@ -146,21 +158,25 @@ const PopularSubjects: React.FC = () => {
                 href="/learn-music"
                 className="block group/card"
               >
-                <div className="flex items-center gap-4 bg-white border border-border rounded-lg p-4 w-[280px] h-[92px] shadow-[0_4px_12px_rgba(0,0,0,0.08)] hover:shadow-md transition-all duration-300 transform group-hover/card:-translate-y-1">
-                  <div className="w-12 h-12 flex-shrink-0 flex items-center justify-center rounded-full bg-[#f0f2f5] overflow-hidden">
+                <div className="relative flex items-center gap-4 bg-gradient-to-r from-[#fce7f3] to-[#fce7f3]/60 border border-[#fce7f3] rounded-2xl p-4 w-[280px] h-[92px] transition-all duration-300 group-hover/card:-translate-y-1 group-hover/card:shadow-[0_8px_30px_rgba(225,29,115,0.12)] overflow-hidden">
+                  <div className="w-12 h-12 flex-shrink-0 flex items-center justify-center rounded-xl bg-white/80">
                     <Image
                       src="https://muzigal.com/images/more-subjects.png"
                       alt="More"
-                      width={48}
-                      height={48}
+                      width={36}
+                      height={36}
                       className="object-contain"
                     />
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-[16px] font-semibold text-navy">
+                    <span className="text-[15px] font-bold text-[#e11d73]">
                       & more
                     </span>
+                    <span className="text-[13px] text-[#e11d73]/60">
+                      Explore all
+                    </span>
                   </div>
+                  <ChevronRight size={18} className="ml-auto text-[#e11d73] group-hover/card:translate-x-1 transition-transform duration-200" />
                 </div>
               </a>
             </div>
