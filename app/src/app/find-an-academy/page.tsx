@@ -1,202 +1,238 @@
 "use client";
 
-import React, { useState } from "react";
-import dynamic from "next/dynamic";
-
-const Header = dynamic(() => import("@/components/sections/Header"), { ssr: false });
-const Footer = dynamic(() => import("@/components/sections/Footer"), { ssr: false });
-import { Search, MapPin, Phone, Star, ChevronRight } from "lucide-react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { Search, MapPin, Navigation, Star, ChevronRight, X } from "lucide-react";
+import { academies, citiesByState } from "@/lib/mockData";
+import Header from "@/components/sections/Header";
+import Footer from "@/components/sections/Footer";
 
-import { states, citiesByState, areasByCity, academies } from "@/lib/mockData";
-
-import EnquiryModal from "@/components/ui/EnquiryModal";
-import FranchiseEnquiryModal from "@/components/ui/FranchiseEnquiryModal";
-
-export default function Page() {
-  return (
-    <React.Suspense fallback={<div>Loading...</div>}>
-      <FindAnAcademyPage />
-    </React.Suspense>
-  );
-}
-
-function FindAnAcademyPage() {
+function FindAcademyContent() {
   const searchParams = useSearchParams();
-  const [selectedState, setSelectedState] = useState("");
-  const [selectedCity, setSelectedCity] = useState("");
-  const [selectedArea, setSelectedArea] = useState("");
-  const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
-  const [searched, setSearched] = useState(false);
-  const [enquiryAcademy, setEnquiryAcademy] = useState<(typeof academies)[0] | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isFranchiseModalOpen, setIsFranchiseModalOpen] = useState(false);
+  const initialQuery = searchParams?.get("q") || "";
+  
+  const [searchQuery, setSearchQuery] = useState(initialQuery);
+  const [selectedCity, setSelectedCity] = useState<string>("All Cities");
+  const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false);
+  
+  const allCities = ["All Cities", ...Object.values(citiesByState).flat()];
+  
+  // Update search query when URL param changes
+  useEffect(() => {
+    if (initialQuery) setSearchQuery(initialQuery);
+  }, [initialQuery]);
 
-  React.useEffect(() => {
-    const query = searchParams.get("q");
-    if (query) {
-      setSearchQuery(query);
-      setSearched(true);
-    }
-  }, [searchParams]);
-
-  const cities = selectedState ? (citiesByState[selectedState] || []) : [];
-  const areas = selectedCity ? (areasByCity[selectedCity] || []) : [];
-
-  const filteredAcademies = academies.filter((a) => {
-    if (selectedState && a.state !== selectedState) return false;
-    if (selectedCity && a.city !== selectedCity) return false;
-    if (selectedArea && a.area !== selectedArea) return false;
-    if (searchQuery && !a.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
-      !a.city.toLowerCase().includes(searchQuery.toLowerCase()) &&
-      !a.area.toLowerCase().includes(searchQuery.toLowerCase())) return false;
-    return true;
+  const filteredAcademies = academies.filter((academy) => {
+    const matchesCity = selectedCity === "All Cities" || academy.city === selectedCity;
+    const searchLower = searchQuery.toLowerCase();
+    const matchesSearch = 
+      academy.name.toLowerCase().includes(searchLower) ||
+      academy.area.toLowerCase().includes(searchLower) ||
+      academy.city.toLowerCase().includes(searchLower);
+      
+    return matchesCity && matchesSearch;
   });
 
-  const handleSearch = () => setSearched(true);
-
   return (
-    <div className="min-h-screen flex flex-col bg-white">
+    <div className="min-h-screen bg-[#f8fafc] flex flex-col font-sans">
       <Header />
+      
+      {/* Hero Section */}
+      <section className="relative bg-[#0f172a] pt-24 pb-32 overflow-hidden">
+        {/* Animated Background */}
+        <div className="absolute inset-0 bg-[url('https://muzigal.com/images/academy-bg.png')] bg-cover bg-center opacity-20" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0f172a] via-[#0f172a]/80 to-[#1e293b]/60" />
+        
+        {/* Decorative Gradients */}
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#e11d73]/20 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-[#8b5cf6]/20 rounded-full blur-[100px] pointer-events-none" />
 
-      {/* Hero Banner */}
-      <section className="bg-[#132742] text-white py-16 px-6">
-        <div className="max-w-[1200px] mx-auto text-center">
-          <h1 className="text-[36px] font-bold mb-3">Find a Muzigal Academy near you</h1>
-          <p className="text-white/70 text-[16px] mb-10 max-w-xl mx-auto">
-            Discover world-class music education at a Muzigal academy in your city
+        <div className="container relative z-10 mx-auto px-6 max-w-[1200px] text-center">
+          <span className="inline-block px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-[#fce7f3] text-[13px] font-semibold tracking-wider mb-6">
+            🏫 OFFLINE LEARNING
+          </span>
+          <h1 className="text-[36px] md:text-[52px] font-bold text-white mb-6 leading-tight tracking-tight">
+            Find the perfect academy <br className="hidden md:block" />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#f472b6] to-[#e11d73]">
+              near you
+            </span>
+          </h1>
+          <p className="text-[#94a3b8] text-[16px] md:text-[18px] max-w-2xl mx-auto mb-12">
+            Experience state-of-the-art infrastructure, expert teachers, and a comprehensive music curriculum at Muzigal Academies.
           </p>
-
-          {/* Filter Bar */}
-          <div className="bg-white rounded-xl p-4 flex flex-col md:flex-row items-center gap-3 max-w-[860px] mx-auto shadow-2xl">
-            {/* State */}
-            <div className="flex-1 w-full">
-              <label className="text-[11px] font-semibold text-[#6b7280] uppercase tracking-wider block mb-1 text-left pl-1">State</label>
-              <select
-                value={selectedState}
-                onChange={(e) => { setSelectedState(e.target.value); setSelectedCity(""); setSelectedArea(""); setSearched(false); }}
-                className="w-full border border-[#e0e0e0] rounded-lg px-3 py-2.5 text-[14px] text-[#132742] focus:outline-none focus:border-[#d63384] bg-white"
+          
+          {/* Search & Filter Bar */}
+          <div className="max-w-[800px] mx-auto bg-white/10 backdrop-blur-xl p-2 rounded-2xl border border-white/20 shadow-2xl flex flex-col md:flex-row gap-2">
+            {/* Location Selector */}
+            <div className="relative md:w-1/3">
+              <button 
+                onClick={() => setIsCityDropdownOpen(!isCityDropdownOpen)}
+                className="w-full h-[52px] flex items-center justify-between px-4 bg-white rounded-xl text-[#0f172a] text-[15px] hover:bg-[#f1f5f9] transition-colors"
               >
-                <option value="">Search by state</option>
-                {states.map((s) => <option key={s} value={s}>{s}</option>)}
-              </select>
+                <div className="flex items-center gap-2 overflow-hidden">
+                  <MapPin size={18} className="text-[#e11d73] shrink-0" />
+                  <span className="font-semibold truncate">{selectedCity}</span>
+                </div>
+                <ChevronRight className={`w-4 h-4 text-[#64748b] transition-transform ${isCityDropdownOpen ? 'rotate-90' : ''}`} />
+              </button>
+              
+              {isCityDropdownOpen && (
+                <div className="absolute top-full left-0 mt-2 w-full bg-white rounded-xl shadow-xl border border-[#e2e8f0] max-h-[300px] overflow-y-auto z-50 p-1">
+                  {allCities.map(city => (
+                    <button
+                      key={city}
+                      onClick={() => { setSelectedCity(city); setIsCityDropdownOpen(false); }}
+                      className={`w-full text-left px-4 py-2.5 rounded-lg text-[14px] transition-colors ${
+                        selectedCity === city 
+                          ? 'bg-[#fce7f3] text-[#e11d73] font-semibold' 
+                          : 'text-[#334155] hover:bg-[#f1f5f9]'
+                      }`}
+                    >
+                      {city}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
-
-            <div className="hidden md:block w-px h-10 bg-[#e0e0e0]" />
-
-            {/* City */}
-            <div className="flex-1 w-full">
-              <label className="text-[11px] font-semibold text-[#6b7280] uppercase tracking-wider block mb-1 text-left pl-1">City</label>
-              <select
-                value={selectedCity}
-                onChange={(e) => { setSelectedCity(e.target.value); setSelectedArea(""); setSearched(false); }}
-                disabled={!selectedState}
-                className="w-full border border-[#e0e0e0] rounded-lg px-3 py-2.5 text-[14px] text-[#132742] focus:outline-none focus:border-[#d63384] bg-white disabled:opacity-50"
-              >
-                <option value="">All Cities</option>
-                {cities.map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
+            
+            {/* Search Input */}
+            <div className="relative md:w-2/3 flex">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <Search size={18} className="text-[#94a3b8]" />
+              </div>
+              <input
+                type="text"
+                placeholder="Search by academy name or area..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full h-[52px] pl-11 pr-4 bg-white rounded-xl text-[15px] text-[#0f172a] placeholder:text-[#94a3b8] outline-none"
+              />
+              {searchQuery && (
+                <button 
+                  onClick={() => setSearchQuery("")}
+                  className="absolute inset-y-0 right-3 flex items-center text-[#94a3b8] hover:text-[#0f172a]"
+                >
+                  <X size={16} />
+                </button>
+              )}
             </div>
-
-            <div className="hidden md:block w-px h-10 bg-[#e0e0e0]" />
-
-            {/* Area */}
-            <div className="flex-1 w-full">
-              <label className="text-[11px] font-semibold text-[#6b7280] uppercase tracking-wider block mb-1 text-left pl-1">Area</label>
-              <select
-                value={selectedArea}
-                onChange={(e) => { setSelectedArea(e.target.value); setSearched(false); }}
-                disabled={!selectedCity}
-                className="w-full border border-[#e0e0e0] rounded-lg px-3 py-2.5 text-[14px] text-[#132742] focus:outline-none focus:border-[#d63384] bg-white disabled:opacity-50"
-              >
-                <option value="">All Areas</option>
-                {areas.map((a) => <option key={a} value={a}>{a}</option>)}
-              </select>
-            </div>
-
-            {/* Search Button */}
-            <button
-              onClick={handleSearch}
-              className="bg-[#d63384] hover:bg-[#b5296e] text-white font-semibold px-8 py-3 rounded-lg flex items-center gap-2 transition-colors mt-4 md:mt-5 w-full md:w-auto"
-            >
-              <Search size={16} />
-              Search
-            </button>
           </div>
         </div>
       </section>
 
       {/* Results Section */}
-      <section className="flex-1 py-12 px-6 bg-[#f8f9fb]">
-        <div className="max-w-[1200px] mx-auto">
-          {searched || (!selectedState) ? (
-            <>
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-[22px] font-bold text-[#132742]">
-                  {searched
-                    ? filteredAcademies.length > 0
-                      ? `${filteredAcademies.length} Academies Found`
-                      : "No academies found"
-                    : "All Academies"}
-                </h2>
-              </div>
-
-              {filteredAcademies.length === 0 && searched ? (
-                <div className="text-center py-20">
-                  <div className="text-6xl mb-4">🏫</div>
-                  <h3 className="text-[20px] font-bold text-[#132742] mb-2">No academies found</h3>
-                  <p className="text-[#6b7280]">Try searching with a different area or city</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {(searched ? filteredAcademies : academies).map((academy) => (
-                    <AcademyCard
-                      key={academy.id}
-                      academy={academy}
-                      onEnquire={() => {
-                        setEnquiryAcademy(academy);
-                        setIsModalOpen(true);
-                      }}
+      <section className="flex-1 -mt-16 relative z-20 pb-20">
+        <div className="container mx-auto px-6 max-w-[1200px]">
+          
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-[20px] font-bold text-[#0f172a]">
+              {filteredAcademies.length} {filteredAcademies.length === 1 ? 'Academy' : 'Academies'} Found
+            </h2>
+            <div className="flex items-center gap-2 text-[#64748b] text-[14px] font-medium bg-white px-4 py-2 rounded-xl shadow-sm border border-[#e2e8f0]">
+              <Navigation size={16} className="text-[#e11d73]" />
+              Showing results for {selectedCity === "All Cities" ? "India" : selectedCity}
+            </div>
+          </div>
+          
+          {filteredAcademies.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredAcademies.map((academy) => (
+                <div 
+                  key={academy.id}
+                  className="group bg-white rounded-2xl overflow-hidden border border-[#e2e8f0] shadow-[0_4px_20px_rgba(15,23,42,0.04)] hover:shadow-[0_12px_40px_rgba(15,23,42,0.08)] hover:border-[#fce7f3] hover:-translate-y-1 transition-all duration-300 flex flex-col"
+                >
+                  <div className="relative h-48 w-full overflow-hidden">
+                    <Image
+                      src={academy.image}
+                      alt={academy.name}
+                      fill
+                      className="object-cover transition-transform duration-700 group-hover:scale-110"
                     />
-                  ))}
+                    {/* Gradient Overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#0f172a]/80 via-transparent to-transparent opacity-80" />
+                    
+                    {/* Floating Info */}
+                    <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full text-[12px] font-bold text-[#0f172a] flex items-center gap-1 shadow-sm">
+                      <Star size={12} className="fill-[#f59e0b] text-[#f59e0b]" />
+                      4.8
+                    </div>
+                    
+                    <div className="absolute bottom-4 left-4 right-4">
+                      <h3 className="text-white font-bold text-[18px] leading-snug line-clamp-2">
+                        {academy.name}
+                      </h3>
+                    </div>
+                  </div>
+                  
+                  <div className="p-6 flex flex-col flex-1">
+                    <div className="flex items-start gap-3 mb-6">
+                      <MapPin size={18} className="text-[#e11d73] shrink-0 mt-0.5" />
+                      <p className="text-[#64748b] text-[14px] leading-relaxed line-clamp-2">
+                        {academy.address}
+                      </p>
+                    </div>
+                    
+                    <div className="mt-auto grid grid-cols-2 gap-3">
+                      <a 
+                        href={`https://maps.google.com/?q=${encodeURIComponent(academy.address)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-2 bg-[#f8fafc] text-[#0f172a] hover:bg-[#f1f5f9] font-semibold text-[13px] py-2.5 rounded-xl transition-colors border border-[#e2e8f0]"
+                      >
+                        <Navigation size={14} />
+                        Get Directions
+                      </a>
+                      <Link 
+                        href="#"
+                        className="flex items-center justify-center gap-2 bg-[#fce7f3] text-[#e11d73] hover:bg-[#e11d73] hover:text-white font-bold text-[13px] py-2.5 rounded-xl transition-all"
+                      >
+                        Book Trial
+                      </Link>
+                    </div>
+                  </div>
                 </div>
-              )}
-            </>
+              ))}
+            </div>
           ) : (
-            <div className="text-center py-20">
-              <MapPin size={48} className="mx-auto text-[#d63384] mb-4" />
-              <h3 className="text-[20px] font-bold text-[#132742] mb-2">Select filters to find an academy</h3>
-              <p className="text-[#6b7280]">Choose your state, city and area to discover Muzigal academies near you</p>
+            <div className="bg-white rounded-3xl border border-[#e2e8f0] p-16 flex flex-col items-center justify-center text-center shadow-sm">
+              <div className="w-20 h-20 bg-[#f1f5f9] rounded-full flex items-center justify-center mb-6">
+                <Search size={32} className="text-[#94a3b8]" />
+              </div>
+              <h3 className="text-[20px] font-bold text-[#0f172a] mb-2">No academies found</h3>
+              <p className="text-[#64748b] text-[15px] max-w-[400px]">
+                We couldn&apos;t find any academies matching &quot;<span className="font-semibold text-[#0f172a]">{searchQuery}</span>&quot; in {selectedCity}. 
+                Try adjusting your search criteria.
+              </p>
+              <button 
+                onClick={() => { setSearchQuery(""); setSelectedCity("All Cities"); }}
+                className="mt-6 text-[#e11d73] font-semibold hover:underline"
+              >
+                Clear all filters
+              </button>
             </div>
           )}
         </div>
       </section>
-
-      {enquiryAcademy && (
-        <EnquiryModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          academy={enquiryAcademy}
-        />
-      )}
-
-      <FranchiseEnquiryModal
-        isOpen={isFranchiseModalOpen}
-        onClose={() => setIsFranchiseModalOpen(false)}
-      />
-
-      {/* CTA Banner */}
-      <section className="bg-[#d63384] text-white py-12 px-6 text-center">
-        <div className="max-w-[700px] mx-auto">
-          <h2 className="text-[28px] font-bold mb-3">Want to open a Muzigal Academy?</h2>
-          <p className="text-white/80 mb-6">Join our growing network of franchise academies and bring music education to your community</p>
-          <button
-            onClick={() => setIsFranchiseModalOpen(true)}
-            className="inline-block bg-white text-[#d63384] font-bold px-8 py-3 rounded-lg hover:bg-white/90 transition-colors"
-          >
-            Apply for Franchise
-          </button>
+      
+      {/* Franchise Banner Callout */}
+      <section className="bg-white py-12 border-t border-[#e2e8f0]">
+        <div className="container mx-auto px-6 max-w-[1200px]">
+          <div className="bg-gradient-to-r from-[#0f172a] to-[#1e293b] rounded-3xl p-8 md:p-12 flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden">
+            <div className="absolute right-0 top-0 w-64 h-64 bg-[#e11d73] blur-[100px] opacity-20 rounded-full pointer-events-none" />
+            
+            <div className="relative z-10 text-center md:text-left">
+              <h3 className="text-white text-[24px] md:text-[28px] font-bold mb-2">Want to start your own Academy?</h3>
+              <p className="text-[#94a3b8] text-[15px]">Join India&apos;s fastest growing music education network.</p>
+            </div>
+            <a 
+              href="https://landing.muzigal.com/mz/franchise"
+              className="relative z-10 shrink-0 bg-white text-[#0f172a] px-8 py-3.5 rounded-xl font-bold text-[14px] hover:bg-[#f8fafc] hover:scale-105 transition-all shadow-[0_4px_20px_rgba(255,255,255,0.2)]"
+            >
+              Partner With Us
+            </a>
+          </div>
         </div>
       </section>
 
@@ -205,56 +241,10 @@ function FindAnAcademyPage() {
   );
 }
 
-function AcademyCard({ academy, onEnquire }: { academy: (typeof academies)[0]; onEnquire: () => void }) {
+export default function FindAcademy() {
   return (
-    <div className="bg-white rounded-xl overflow-hidden shadow-[0_2px_12px_rgba(0,0,0,0.08)] hover:shadow-[0_4px_24px_rgba(0,0,0,0.12)] transition-shadow group">
-      <div className="relative h-[180px] overflow-hidden">
-        <Image
-          src={academy.image}
-          alt={academy.name}
-          fill
-          className="object-cover group-hover:scale-105 transition-transform duration-500"
-        />
-      </div>
-      <div className="p-5">
-        <h3 className="text-[16px] font-bold text-[#132742] mb-1">{academy.name}</h3>
-        <div className="flex items-start gap-1.5 text-[13px] text-[#6b7280] mb-3">
-          <MapPin size={13} className="mt-0.5 flex-shrink-0 text-[#d63384]" />
-          <span>{academy.address}</span>
-        </div>
-        <div className="flex items-center gap-1 mb-3">
-          <Star size={13} className="fill-[#f59e0b] text-[#f59e0b]" />
-          <span className="text-[13px] font-semibold text-[#132742]">{academy.rating}</span>
-          <span className="text-[13px] text-[#6b7280]">({academy.reviews} reviews)</span>
-        </div>
-        <div className="flex flex-wrap gap-1.5 mb-4">
-          {academy.subjects.slice(0, 4).map((s) => (
-            <span key={s} className="bg-[#f0f2f5] text-[#132742] text-[11px] font-medium px-2 py-0.5 rounded-full">
-              {s}
-            </span>
-          ))}
-          {academy.subjects.length > 4 && (
-            <span className="bg-[#f0f2f5] text-[#6b7280] text-[11px] px-2 py-0.5 rounded-full">
-              +{academy.subjects.length - 4} more
-            </span>
-          )}
-        </div>
-        <div className="flex items-center justify-between pt-3 border-t border-[#f0f2f5]">
-          <a href={`tel:${academy.phone}`} className="flex items-center gap-1.5 text-[13px] text-[#6b7280] hover:text-[#d63384] transition-colors">
-            <Phone size={13} />
-            {academy.phone}
-          </a>
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              onEnquire();
-            }}
-            className="flex items-center gap-1 text-[#d63384] font-semibold text-[13px] hover:gap-2 transition-all"
-          >
-            Enquire <ChevronRight size={14} />
-          </button>
-        </div>
-      </div>
-    </div>
+    <React.Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#f8fafc]"><div className="w-8 h-8 border-4 border-[#e11d73] border-t-transparent rounded-full animate-spin" /></div>}>
+      <FindAcademyContent />
+    </React.Suspense>
   );
 }

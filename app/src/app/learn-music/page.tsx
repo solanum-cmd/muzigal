@@ -1,273 +1,219 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { Search, MapPin, Star, PlayCircle, BookOpen, Clock, X, SlidersHorizontal } from "lucide-react";
+import { teachers, subjects, languages } from "@/lib/mockData";
 import Header from "@/components/sections/Header";
 import Footer from "@/components/sections/Footer";
-import { Star, Filter, ChevronDown, Search, Clock, Globe, BookOpen, X } from "lucide-react";
-import Image from "next/image";
-import TeacherBookingModal from "@/components/ui/TeacherBookingModal";
 
-import { subjects, languages, levels, teachers } from "@/lib/mockData";
-
-import { useRouter, useSearchParams } from "next/navigation";
-
-// Main Page export
-export default function Page() {
-  return (
-    <React.Suspense fallback={<div>Loading...</div>}>
-      <FindATeacherPage />
-    </React.Suspense>
-  );
-}
-
-function FindATeacherPage() {
+function LearnMusicContent() {
   const searchParams = useSearchParams();
-  // ... rest of the component
-
-  const [subjectFilter, setSubjectFilter] = useState("All Subjects");
-  const [languageFilter, setLanguageFilter] = useState("All Languages");
-  const [levelFilter, setLevelFilter] = useState("All Levels");
-  const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
+  const initialQuery = searchParams?.get("q") || "";
+  
+  const [searchQuery, setSearchQuery] = useState(initialQuery);
+  const [selectedSubject, setSelectedSubject] = useState<string>("All Subjects");
+  const [selectedLanguage, setSelectedLanguage] = useState<string>("All Languages");
   const [showFilters, setShowFilters] = useState(false);
-  const [selectedTeacher, setSelectedTeacher] = useState<(typeof teachers)[0] | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  React.useEffect(() => {
-    const query = searchParams.get("q");
-    if (query !== null) {
-      setSearchQuery(query);
-    }
-  }, [searchParams]);
+  useEffect(() => {
+    if (initialQuery) setSearchQuery(initialQuery);
+  }, [initialQuery]);
 
-  const filtered = useMemo(() => {
-    return teachers.filter((t) => {
-      if (subjectFilter !== "All Subjects" && !t.subjects.includes(subjectFilter)) return false;
-      if (languageFilter !== "All Languages" && !t.languages.includes(languageFilter)) return false;
-      if (levelFilter !== "All Levels" && !t.level.includes(levelFilter)) return false;
-      if (searchQuery && !t.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
-        !t.subjects.join(" ").toLowerCase().includes(searchQuery.toLowerCase())) return false;
-      return true;
-    });
-  }, [subjectFilter, languageFilter, levelFilter, searchQuery]);
+  const allSubjects = ["All Subjects", ...subjects];
+  const allLanguages = ["All Languages", ...languages];
 
-  const activeFilters = [
-    subjectFilter !== "All Subjects" && subjectFilter,
-    languageFilter !== "All Languages" && languageFilter,
-    levelFilter !== "All Levels" && levelFilter,
-  ].filter(Boolean) as string[];
-
-  const clearFilter = (f: string) => {
-    if (subjects.includes(f)) setSubjectFilter("All Subjects");
-    else if (languages.includes(f)) setLanguageFilter("All Languages");
-    else if (levels.includes(f)) setLevelFilter("All Levels");
-  };
+  const filteredTeachers = teachers.filter((teacher) => {
+    const matchesSubject = selectedSubject === "All Subjects" || teacher.subjects.includes(selectedSubject);
+    const matchesLanguage = selectedLanguage === "All Languages" || teacher.languages.includes(selectedLanguage);
+    const searchLower = searchQuery.toLowerCase();
+    const matchesSearch = 
+      teacher.name.toLowerCase().includes(searchLower) ||
+      teacher.subjects.some(s => s.toLowerCase().includes(searchLower));
+      
+    return matchesSubject && matchesLanguage && matchesSearch;
+  });
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
+    <div className="min-h-screen bg-[#f8fafc] flex flex-col font-sans">
       <Header />
-
-      {/* Hero */}
-      <section className="bg-[#132742] py-14 px-6">
-        <div className="max-w-[1200px] mx-auto">
-          <h1 className="text-white text-[34px] font-bold mb-2 text-center">Find Your Perfect Music Teacher</h1>
-          <p className="text-white/70 text-center mb-8 text-[16px]">
-            Learn from 400+ verified teachers across instruments and genres
-          </p>
-
-          {/* Search */}
-          <div className="max-w-[560px] mx-auto relative">
-            <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-white" />
-            <input
-              type="text"
-              placeholder="Search by teacher name or instrument..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-3.5 rounded-xl text-[15px] text-white outline-none focus:ring-2 focus:ring-[#d63384]"
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* Filters Bar */}
-      <div className="sticky top-[70px] z-40 bg-white border-b border-[#e0e0e0] shadow-sm">
-        <div className="max-w-[1200px] mx-auto px-6 py-3 flex flex-wrap items-center gap-3">
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center gap-2 border border-[#e0e0e0] rounded-lg px-4 py-2 text-[14px] font-semibold text-[#132742] hover:border-[#d63384] transition-colors"
-          >
-            <Filter size={15} />
-            Filters
-            {activeFilters.length > 0 && (
-              <span className="bg-[#d63384] text-white text-[11px] w-5 h-5 rounded-full flex items-center justify-center">
-                {activeFilters.length}
-              </span>
-            )}
-          </button>
-
-          {/* Subject Dropdown */}
-          <div className="relative">
-            <select
-              value={subjectFilter}
-              onChange={(e) => setSubjectFilter(e.target.value)}
-              className="appearance-none border border-[#e0e0e0] rounded-lg pl-3 pr-8 py-2 text-[14px] text-[#132742] bg-white cursor-pointer hover:border-[#d63384] focus:outline-none focus:border-[#d63384]"
-            >
-              {subjects.map((s) => <option key={s}>{s}</option>)}
-            </select>
-            <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 text-[#6b7280] pointer-events-none" />
+      
+      {/* Header Area */}
+      <div className="bg-white border-b border-[#e2e8f0] pt-12 pb-8 sticky top-[72px] z-40 shadow-sm">
+        <div className="container mx-auto px-6 max-w-[1200px]">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6">
+            <div>
+              <h1 className="text-[28px] md:text-[32px] font-bold text-[#0f172a] mb-2 leading-tight">
+                Find Your Perfect Teacher
+              </h1>
+              <p className="text-[#64748b] text-[15px]">
+                {filteredTeachers.length} verified expert teachers available
+              </p>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              {/* Mobile Filter Toggle */}
+              <button 
+                onClick={() => setShowFilters(!showFilters)}
+                className="md:hidden flex items-center justify-center gap-2 bg-[#f1f5f9] text-[#0f172a] h-12 px-4 rounded-xl border border-[#e2e8f0] font-semibold text-[14px]"
+              >
+                <SlidersHorizontal size={16} />
+                Filters
+              </button>
+              
+              {/* Search */}
+              <div className="relative flex-grow md:w-[320px]">
+                <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#94a3b8]" />
+                <input
+                  type="text"
+                  placeholder="Search teachers, subjects..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full h-12 pl-11 pr-4 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl text-[14px] text-[#0f172a] placeholder:text-[#94a3b8] focus:bg-white focus:border-[#e11d73] focus:ring-2 focus:ring-[#e11d73]/10 transition-all outline-none"
+                />
+                {searchQuery && (
+                  <button 
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#94a3b8] hover:text-[#0f172a]"
+                  >
+                    <X size={16} />
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
 
-          {/* Language Dropdown */}
-          <div className="relative">
-            <select
-              value={languageFilter}
-              onChange={(e) => setLanguageFilter(e.target.value)}
-              className="appearance-none border border-[#e0e0e0] rounded-lg pl-3 pr-8 py-2 text-[14px] text-[#132742] bg-white cursor-pointer hover:border-[#d63384] focus:outline-none focus:border-[#d63384]"
-            >
-              {languages.map((l) => <option key={l}>{l}</option>)}
-            </select>
-            <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 text-[#6b7280] pointer-events-none" />
+          {/* Desktop Filters */}
+          <div className={`flex flex-col md:flex-row gap-4 ${showFilters ? 'block' : 'hidden md:flex'}`}>
+            <div className="flex-1 md:max-w-[240px]">
+              <label className="block text-[12px] font-semibold text-[#64748b] mb-1.5 uppercase tracking-wider">Subject</label>
+              <select
+                value={selectedSubject}
+                onChange={(e) => setSelectedSubject(e.target.value)}
+                className="w-full h-11 px-4 bg-white border border-[#e2e8f0] rounded-xl text-[14px] text-[#0f172a] font-medium outline-none focus:border-[#e11d73] appearance-none cursor-pointer"
+                style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 16px center' }}
+              >
+                {allSubjects.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+            
+            <div className="flex-1 md:max-w-[240px]">
+              <label className="block text-[12px] font-semibold text-[#64748b] mb-1.5 uppercase tracking-wider">Language</label>
+              <select
+                value={selectedLanguage}
+                onChange={(e) => setSelectedLanguage(e.target.value)}
+                className="w-full h-11 px-4 bg-white border border-[#e2e8f0] rounded-xl text-[14px] text-[#0f172a] font-medium outline-none focus:border-[#e11d73] appearance-none cursor-pointer"
+                style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 16px center' }}
+              >
+                {allLanguages.map(l => <option key={l} value={l}>{l}</option>)}
+              </select>
+            </div>
           </div>
-
-          {/* Level Dropdown */}
-          <div className="relative">
-            <select
-              value={levelFilter}
-              onChange={(e) => setLevelFilter(e.target.value)}
-              className="appearance-none border border-[#e0e0e0] rounded-lg pl-3 pr-8 py-2 text-[14px] text-[#132742] bg-white cursor-pointer hover:border-[#d63384] focus:outline-none focus:border-[#d63384]"
-            >
-              {levels.map((l) => <option key={l}>{l}</option>)}
-            </select>
-            <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 text-[#6b7280] pointer-events-none" />
-          </div>
-
-          {/* Active filter chips */}
-          {activeFilters.map((f) => (
-            <span
-              key={f}
-              className="flex items-center gap-1 bg-[#fce4ef] text-[#d63384] text-[13px] font-medium px-3 py-1.5 rounded-full cursor-pointer"
-              onClick={() => clearFilter(f)}
-            >
-              {f} <X size={12} />
-            </span>
-          ))}
-
-          <span className="ml-auto text-[14px] text-[#6b7280]">{filtered.length} teacher{filtered.length !== 1 ? "s" : ""} found</span>
         </div>
       </div>
 
-      {/* Teacher Grid */}
-      <section className="flex-1 py-10 px-6 bg-[#f8f9fb]">
-        <div className="max-w-[1200px] mx-auto">
-          {filtered.length === 0 ? (
-            <div className="text-center py-20">
-              <div className="text-6xl mb-4">🎵</div>
-              <h3 className="text-[20px] font-bold text-[#132742] mb-2">No teachers found</h3>
-              <p className="text-[#6b7280]">Try adjusting your filters or search query</p>
-              <button
-                onClick={() => { setSubjectFilter("All Subjects"); setLanguageFilter("All Languages"); setLevelFilter("All Levels"); setSearchQuery(""); }}
-                className="mt-4 text-[#d63384] font-semibold hover:underline"
+      {/* Main Content */}
+      <section className="flex-1 py-10">
+        <div className="container mx-auto px-6 max-w-[1200px]">
+          {filteredTeachers.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredTeachers.map((teacher) => (
+                <div 
+                  key={teacher.id}
+                  className="bg-white rounded-2xl border border-[#e2e8f0] shadow-[0_4px_20px_rgba(15,23,42,0.03)] hover:shadow-[0_12px_40px_rgba(225,29,115,0.08)] hover:border-[#fce7f3] transition-all duration-300 flex flex-col group overflow-hidden"
+                >
+                  <div className="p-6">
+                    <div className="flex gap-4 mb-5 relative">
+                      {/* Avatar */}
+                      <div className="relative w-20 h-20 rounded-2xl overflow-hidden shrink-0 border border-[#e2e8f0] shadow-sm">
+                        <Image
+                          src={teacher.image}
+                          alt={teacher.name}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                      
+                      {/* Teacher Info */}
+                      <div>
+                        <div className="flex items-start justify-between">
+                          <h3 className="text-[#0f172a] font-bold text-[18px] group-hover:text-[#e11d73] transition-colors">{teacher.name}</h3>
+                          <div className="flex items-center gap-1 bg-[#fef3c7] text-[#b45309] px-2 py-0.5 rounded-full text-[12px] font-bold">
+                            <Star size={12} className="fill-[#f59e0b] text-[#f59e0b]" />
+                            {teacher.rating}
+                          </div>
+                        </div>
+                        <p className="text-[#e11d73] text-[13px] font-semibold mt-1 uppercase tracking-wider">{teacher.subjects.join(", ")}</p>
+                        <div className="flex items-center gap-1 text-[#64748b] text-[13px] mt-1.5">
+                          <MapPin size={14} />
+                          Online
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3 pt-4 border-t border-[#f1f5f9]">
+                      <div className="flex items-start gap-2 text-[13px]">
+                        <BookOpen size={16} className="text-[#94a3b8] shrink-0 mt-0.5" />
+                        <span className="text-[#334155] leading-relaxed"><span className="font-semibold text-[#0f172a]">Teaches:</span> {teacher.subjects.join(", ")}</span>
+                      </div>
+                      <div className="flex items-start gap-2 text-[13px]">
+                        <span className="text-[#94a3b8] shrink-0 mt-0.5 font-serif text-[16px] leading-none">A</span>
+                        <span className="text-[#334155] leading-relaxed"><span className="font-semibold text-[#0f172a]">Speaks:</span> {teacher.languages.join(", ")}</span>
+                      </div>
+                      <div className="flex items-start gap-2 text-[13px]">
+                        <Clock size={16} className="text-[#94a3b8] shrink-0 mt-0.5" />
+                        <span className="text-[#334155] leading-relaxed"><span className="font-semibold text-[#0f172a]">Experience:</span> {teacher.experience}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-auto bg-[#f8fafc] p-4 flex items-center justify-between border-t border-[#e2e8f0]">
+                    <div className="flex flex-col">
+                      <span className="text-[11px] text-[#64748b] font-semibold uppercase tracking-wider">Trial Class</span>
+                      <span className="text-[18px] font-bold text-[#0f172a]">₹{teacher.price}</span>
+                    </div>
+                    <Link
+                      href="#"
+                      className="flex items-center gap-2 bg-[#0f172a] text-white px-5 py-2.5 rounded-xl text-[13px] font-bold hover:bg-[#e11d73] transition-colors"
+                    >
+                      <PlayCircle size={16} />
+                      Book Trial
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="bg-white rounded-3xl border border-[#e2e8f0] p-16 flex flex-col items-center justify-center text-center shadow-sm max-w-2xl mx-auto">
+              <div className="w-20 h-20 bg-[#f1f5f9] rounded-full flex items-center justify-center mb-6">
+                <Search size={32} className="text-[#94a3b8]" />
+              </div>
+              <h3 className="text-[20px] font-bold text-[#0f172a] mb-2">No teachers found</h3>
+              <p className="text-[#64748b] text-[15px] max-w-[400px]">
+                We couldn&apos;t find any teachers matching your criteria. Try adjusting your filters or search query.
+              </p>
+              <button 
+                onClick={() => { setSearchQuery(""); setSelectedSubject("All Subjects"); setSelectedLanguage("All Languages"); }}
+                className="mt-6 text-[#e11d73] font-semibold hover:underline"
               >
                 Clear all filters
               </button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filtered.map((t) => (
-                <TeacherCard
-                  key={t.id}
-                  teacher={t}
-                  onBookTrial={() => {
-                    setSelectedTeacher(t);
-                    setIsModalOpen(true);
-                  }}
-                />
-              ))}
             </div>
           )}
         </div>
       </section>
 
       <Footer />
-      {selectedTeacher && (
-        <TeacherBookingModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          teacher={selectedTeacher}
-        />
-      )}
     </div>
   );
 }
 
-function TeacherCard({ teacher, onBookTrial }: { teacher: (typeof teachers)[0]; onBookTrial: () => void }) {
+export default function LearnMusic() {
   return (
-    <div className="bg-white rounded-xl overflow-hidden shadow-[0_2px_12px_rgba(0,0,0,0.07)] hover:shadow-[0_6px_24px_rgba(0,0,0,0.12)] transition-shadow">
-      {/* Top Section */}
-      <div className="p-5 flex gap-4">
-        <div className="relative w-[72px] h-[72px] rounded-full overflow-hidden flex-shrink-0 ring-2 ring-[#fce4ef]">
-          <Image src={teacher.image} alt={teacher.name} fill className="object-cover" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <h3 className="text-[16px] font-bold text-[#132742] truncate">{teacher.name}</h3>
-          <div className="flex flex-wrap gap-1 mt-1">
-            {teacher.subjects.slice(0, 2).map((s) => (
-              <span key={s} className="text-[11px] bg-[#fce4ef] text-[#d63384] font-medium px-2 py-0.5 rounded-full">{s}</span>
-            ))}
-            {teacher.subjects.length > 2 && (
-              <span className="text-[11px] text-[#6b7280] px-1">+{teacher.subjects.length - 2}</span>
-            )}
-          </div>
-          <div className="flex items-center gap-1 mt-1.5">
-            <Star size={12} className="fill-[#f59e0b] text-[#f59e0b]" />
-            <span className="text-[13px] font-semibold text-[#132742]">{teacher.rating}</span>
-            <span className="text-[12px] text-[#6b7280]">({teacher.reviews})</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Badges */}
-      {teacher.badges.length > 0 && (
-        <div className="px-5 pb-2 flex flex-wrap gap-1.5">
-          {teacher.badges.map((b) => (
-            <span key={b} className="text-[11px] bg-[#f0f2f5] text-[#132742] font-medium px-2 py-0.5 rounded border border-[#e0e0e0]">{b}</span>
-          ))}
-        </div>
-      )}
-
-      {/* Bio */}
-      <div className="px-5 pb-4">
-        <p className="text-[13px] text-[#6b7280] leading-[1.5] line-clamp-2">{teacher.bio}</p>
-      </div>
-
-      {/* Meta */}
-      <div className="px-5 pb-4 flex flex-wrap gap-x-4 gap-y-2">
-        <div className="flex items-center gap-1.5 text-[12px] text-[#6b7280]">
-          <Clock size={12} className="text-[#d63384]" />
-          {teacher.experience} exp.
-        </div>
-        <div className="flex items-center gap-1.5 text-[12px] text-[#6b7280]">
-          <Globe size={12} className="text-[#d63384]" />
-          {teacher.languages.slice(0, 2).join(", ")}
-        </div>
-        <div className="flex items-center gap-1.5 text-[12px] text-[#6b7280]">
-          <BookOpen size={12} className="text-[#d63384]" />
-          {teacher.level.join(", ")}
-        </div>
-      </div>
-
-      {/* Footer */}
-      <div className="border-t border-[#f0f2f5] px-5 py-4 flex items-center justify-between">
-        <div>
-          <span className="text-[14px] font-bold text-[#132742]">{teacher.price}</span>
-          <span className="text-[12px] text-[#10b981] ml-2 font-medium">Trial: {teacher.trialPrice}</span>
-        </div>
-        <button
-          onClick={onBookTrial}
-          className="bg-[#d63384] hover:bg-[#b5296e] text-white text-[13px] font-semibold px-4 py-2 rounded-lg transition-colors"
-        >
-          Book Free Trial
-        </button>
-      </div>
-    </div>
+    <React.Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#f8fafc]"><div className="w-8 h-8 border-4 border-[#e11d73] border-t-transparent rounded-full animate-spin" /></div>}>
+      <LearnMusicContent />
+    </React.Suspense>
   );
 }
