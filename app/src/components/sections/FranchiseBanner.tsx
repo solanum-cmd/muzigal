@@ -5,19 +5,12 @@ import Image from 'next/image';
 
 /**
  * FranchiseBanner Component
- * 
- * A pixel-perfect clone of the dark blue franchise section.
- * Features:
- * - Navy Blue background (#132742)
- * - Custom slider for academy images
- * - "Apply for Franchise" CTA button (Raspberry Pink #D63384)
- * - Responsive layout matching the design system
+ * Premium redesign with gradient background, modern slider, and refined CTA.
  */
 const FranchiseBanner: React.FC = () => {
   const [activeSlide, setActiveSlide] = useState(0);
   const totalSlides = 4;
 
-  // Auto-slide functionality (optional but standard for these components)
   useEffect(() => {
     const timer = setInterval(() => {
       setActiveSlide((prev) => (prev + 1) % totalSlides);
@@ -27,45 +20,78 @@ const FranchiseBanner: React.FC = () => {
 
   const academyImages = [
     "https://muzigal.com/images/academy1.png",
-    "https://muzigal.com/images/academy1.png", // Fallback if other images aren't in assets
+    "https://muzigal.com/images/academy1.png",
     "https://muzigal.com/images/academy1.png",
     "https://muzigal.com/images/academy1.png",
   ];
 
   return (
-    <section className="relative w-full overflow-hidden bg-[#132742] py-20 md:py-24">
-      {/* Background patterns could be added here if needed to match the 'blob' aesthetic */}
-      <div className="absolute inset-0 opacity-10 pointer-events-none">
-        {/* Abstract background curve/blob as seen in screenshots */}
-        <div className="absolute -left-20 bottom-0 w-[400px] h-[400px] rounded-full bg-white/10 blur-3xl lg:block hidden"></div>
+    <section className="relative w-full overflow-hidden py-20 md:py-28">
+      {/* Animated gradient background */}
+      <div className="absolute inset-0 gradient-bg-animated" />
+
+      {/* Mesh overlay */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute -left-20 bottom-0 w-[500px] h-[500px] rounded-full bg-white/5 blur-3xl" />
+        <div className="absolute -right-20 top-0 w-[400px] h-[400px] rounded-full bg-[#e11d73]/10 blur-3xl" />
+        {/* Grid pattern */}
+        <div
+          className="absolute inset-0 opacity-[0.02]"
+          style={{
+            backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
+            backgroundSize: '60px 60px',
+          }}
+        />
       </div>
 
-      <div className="container relative mx-auto px-6 lg:px-12 flex flex-col md:flex-row items-center justify-between gap-12 lg:gap-24">
-        
+      <div className="container relative z-10 mx-auto px-6 lg:px-12 max-w-[1200px] flex flex-col md:flex-row items-center justify-between gap-12 lg:gap-20">
+
         {/* Left Content Column */}
         <div className="w-full md:w-1/2 text-left space-y-6">
-          <h2 className="text-white text-[32px] md:text-[40px] font-bold leading-[1.2] font-display">
-            Passionate about music education
+          <span className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/10 rounded-full px-4 py-1.5 text-[12px] font-semibold text-white/80 tracking-wide">
+            🏫 Franchise Opportunity
+          </span>
+
+          <h2 className="text-white text-[30px] md:text-[40px] font-bold leading-[1.15] tracking-tight">
+            Passionate about{' '}
+            <span className="bg-gradient-to-r from-[#f472b6] to-[#e11d73] bg-clip-text text-transparent">
+              music education
+            </span>
           </h2>
-          <p className="text-white/80 text-xl font-normal leading-relaxed">
-            Bring Muzigal to your city
+          <p className="text-white/60 text-[16px] md:text-[18px] leading-relaxed max-w-[400px]">
+            Bring Muzigal to your city and transform lives through the power of music
           </p>
-          <div className="pt-4">
-            <a 
-              href="https://landing.muzigal.com/mz/franchise" 
-              className="inline-block bg-[#D63384] hover:bg-[#c22d76] text-white font-semibold text-base py-3.5 px-8 rounded transition-colors duration-300 ga_webFranchiseApply"
+          <div className="pt-2">
+            <a
+              href="https://landing.muzigal.com/mz/franchise"
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-[#e11d73] to-[#be185d] text-white font-semibold text-[15px] py-3.5 px-8 rounded-xl transition-all duration-300 shadow-[0_4px_20px_rgba(225,29,115,0.3)] hover:shadow-[0_8px_30px_rgba(225,29,115,0.4)] hover:scale-[1.02] active:scale-[0.98] group"
             >
               Apply for Franchise
+              <svg className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
             </a>
+          </div>
+
+          {/* Trust indicators */}
+          <div className="flex items-center gap-6 pt-4">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-[#10b981]/20 flex items-center justify-center text-[14px]">✓</div>
+              <span className="text-white/50 text-[13px]">Low Investment</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-[#10b981]/20 flex items-center justify-center text-[14px]">✓</div>
+              <span className="text-white/50 text-[13px]">Full Support</span>
+            </div>
           </div>
         </div>
 
         {/* Right Slider Column */}
         <div className="w-full md:w-1/2 relative">
           <div className="relative aspect-[460/320] w-full max-w-[500px] ml-auto">
-            {/* Image Frame/Container with Rounded Corners matching screenshot */}
-            <div className="relative h-full w-full rounded-[40px] overflow-hidden shadow-2xl z-10">
-              <div 
+            {/* Image container */}
+            <div className="relative h-full w-full rounded-3xl overflow-hidden shadow-2xl z-10 border border-white/10">
+              <div
                 className="flex transition-transform duration-700 ease-in-out h-full"
                 style={{ transform: `translateX(-${activeSlide * 100}%)` }}
               >
@@ -83,20 +109,26 @@ const FranchiseBanner: React.FC = () => {
               </div>
             </div>
 
-            {/* Decorative element behind the image - matching the 'steps' or 'blob' visual style */}
-            <div className="absolute -bottom-4 -left-4 w-full h-full border-2 border-white/10 rounded-[40px] -z-0"></div>
+            {/* Decorative border */}
+            <div className="absolute -bottom-3 -left-3 w-full h-full border border-white/10 rounded-3xl -z-0" />
 
-            {/* Slider Dots */}
-            <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 flex gap-3 z-20">
+            {/* Progress bar instead of dots */}
+            <div className="absolute -bottom-10 left-0 right-0 flex gap-2 z-20 px-4">
               {[...Array(totalSlides)].map((_, i) => (
                 <button
                   key={i}
                   onClick={() => setActiveSlide(i)}
-                  className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
-                    activeSlide === i ? 'bg-[#D63384] w-6' : 'bg-white/30'
-                  }`}
+                  className="flex-1 h-1 rounded-full overflow-hidden bg-white/20 transition-all duration-300"
                   aria-label={`Go to slide ${i + 1}`}
-                />
+                >
+                  <div
+                    className={`h-full rounded-full transition-all duration-500 ${
+                      activeSlide === i
+                        ? 'w-full bg-gradient-to-r from-[#e11d73] to-[#f472b6]'
+                        : 'w-0 bg-white/40'
+                    }`}
+                  />
+                </button>
               ))}
             </div>
           </div>
