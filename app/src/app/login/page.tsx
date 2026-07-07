@@ -1,409 +1,371 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
-import { ChevronLeft, ChevronRight, Check } from "lucide-react";
-import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
-
-const countryCodes = [
-  { code: "+91", flag: "🇮🇳", name: "India" },
-  { code: "+1", flag: "🇺🇸", name: "USA" },
-  { code: "+44", flag: "🇬🇧", name: "UK" },
-  { code: "+61", flag: "🇦🇺", name: "Australia" },
-  { code: "+971", flag: "🇦🇪", name: "UAE" },
-  { code: "+65", flag: "🇸🇬", name: "Singapore" },
-  { code: "+60", flag: "🇲🇾", name: "Malaysia" },
-];
+import { toast } from "sonner";
+import { ChevronRight, ChevronLeft, Check } from "lucide-react";
 
 const instruments = [
-  { name: "Guitar", icon: "🎸" },
-  { name: "Piano", icon: "🎹" },
-  { name: "Keyboard", icon: "🎹" },
-  { name: "Drums", icon: "🥁" },
-  { name: "Violin", icon: "🎻" },
-  { name: "Flute", icon: "🪈" },
-  { name: "Vocals", icon: "🎤" },
-  { name: "Tabla", icon: "🥁" },
-  { name: "Saxophone", icon: "🎷" },
-  { name: "Trumpet", icon: "🎺" },
-  { name: "Ukulele", icon: "🎸" },
-  { name: "Sitar", icon: "🎸" },
+  { id: "acoustic-guitar", name: "Acoustic Guitar", icon: "🎸" },
+  { id: "piano", name: "Piano", icon: "🎹" },
+  { id: "keyboard", name: "Keyboard", icon: "🎹" },
+  { id: "western-vocal", name: "Western Vocal", icon: "🎤" },
+  { id: "violin", name: "Violin", icon: "🎻" },
+  { id: "drums", name: "Drums", icon: "🥁" },
+  { id: "ukulele", name: "Ukulele", icon: "🎸" },
+  { id: "flute", name: "Flute", icon: "🎺" },
+  { id: "carnatic-vocal", name: "Carnatic Vocal", icon: "🎤" },
 ];
 
-const experienceLevels = ["Complete Beginner", "Some Experience", "Intermediate", "Advanced"];
-const teachingLanguages = ["English", "Hindi", "Tamil", "Telugu", "Kannada", "Malayalam", "Bengali", "Marathi"];
-const ageGroups = ["3-5 years", "5-10 years", "10-20 years", "20-50 years", "50+ years"];
-
-type Step = "phone" | "profile" | "subject" | "preferences" | "success";
-
-export default function LoginPage() {
-  const { refreshUser } = useAuth();
-  const [step, setStep] = useState<Step>("phone");
-  const [countryCode, setCountryCode] = useState(countryCodes[0]);
+function LoginForm() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { user, refreshUser } = useAuth();
+  
+  const [step, setStep] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
+  const [mode, setMode] = useState<"login" | "register">("login");
+  
+  // Form state
   const [phone, setPhone] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
-  const [selectedInstruments, setSelectedInstruments] = useState<string[]>([]);
-  const [selectedLevel, setSelectedLevel] = useState("");
-  const [selectedLanguage, setSelectedLanguage] = useState("");
-  const [selectedAge, setSelectedAge] = useState("");
-  const [loading, setLoading] = useState(false);
+  
+  // Preferences state
+  const [selectedInstrument, setSelectedInstrument] = useState("");
+  const [skillLevel, setSkillLevel] = useState("");
 
-  const toggleInstrument = (name: string) => {
-    setSelectedInstruments((prev) =>
-      prev.includes(name) ? prev.filter((i) => i !== name) : [...prev, name]
-    );
+  useEffect(() => {
+    if (user) {
+      const redirect = searchParams?.get('redirect') || '/';
+      router.push(redirect);
+    }
+  }, [user, router, searchParams]);
+
+  const handleAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    
+    try {
+      if (mode === "login") {
+        const res = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phone }),
+        });
+        const data = await res.json();
+        
+        if (!res.ok) throw new Error(data.error || "Login failed");
+        
+        await refreshUser();
+        toast.success("Successfully logged in!");
+        // Navigation handled by useEffect
+      } else {
+        // Only validate basic info, move to preferences
+        if (phone && firstName && lastName) {
+          setStep(2);
+        } else {
+          toast.error("Please fill all required fields");
+        }
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Authentication failed");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const stepNumber = { phone: 1, profile: 2, subject: 3, preferences: 4, success: 5 }[step];
-  const totalSteps = 4;
-
-  const handlePhoneSubmit = async () => {
-    if (phone.length < 10) return;
-    setLoading(true);
+  const handleCompleteRegistration = async () => {
+    setIsLoading(true);
     try {
-      // Check if user exists
-      const res = await fetch('/api/auth/check-user', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone })
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone,
+          firstName,
+          lastName,
+          email,
+          instrument: selectedInstrument,
+          skillLevel
+        }),
       });
-
-      if (res.ok) {
-        const data = await res.json();
-        if (data.exists) {
-          // User exists, login directly
-          const loginRes = await fetch('/api/auth/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ phone })
-          });
-
-          if (loginRes.ok) {
-            await refreshUser();
-            window.location.href = '/';
-          } else {
-            alert("Login failed");
-          }
-        } else {
-          // User doesn't exist, go to profile creation
-          setStep("profile");
-        }
-      } else {
-        alert("Something went wrong");
-      }
-    } catch (e) {
-      console.error(e);
-      alert("Something went wrong");
+      const data = await res.json();
+      
+      if (!res.ok) throw new Error(data.error || "Registration failed");
+      
+      await refreshUser();
+      toast.success("Registration completed!");
+      setStep(3); // Success state
+      setTimeout(() => {
+        const redirect = searchParams?.get('redirect') || '/';
+        router.push(redirect);
+      }, 2000);
+    } catch (error: any) {
+      toast.error(error.message || "Registration failed");
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#1a0b2e] via-[#132742] to-[#0d1f36] flex flex-col">
-      {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4">
-        <Link href="/">
-          <Image src="https://muzigal.com/images/logo.svg" width={120} height={36} alt="Muzigal" className="brightness-0 invert" />
-        </Link>
-        {step !== "phone" && step !== "success" && (
-          <button
-            onClick={() => {
-              const prev: Record<Step, Step> = { phone: "phone", profile: "phone", subject: "profile", preferences: "subject", success: "preferences" };
-              setStep(prev[step]);
-            }}
-            className="flex items-center gap-1 text-white/70 hover:text-white text-[14px] transition-colors"
-          >
-            <ChevronLeft size={16} /> Back
-          </button>
-        )}
+    <div className="min-h-screen w-full relative flex items-center justify-center p-4 bg-[#f8fafc] overflow-hidden">
+      {/* Animated Background */}
+      <div className="absolute inset-0 z-0">
+        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#0f172a]" />
+        
+        {/* Animated Orbs */}
+        <div className="absolute top-[20%] left-[20%] w-[400px] h-[400px] bg-[#e11d73] rounded-full mix-blend-screen filter blur-[120px] opacity-20 animate-float" />
+        <div className="absolute bottom-[20%] right-[20%] w-[500px] h-[500px] bg-[#8b5cf6] rounded-full mix-blend-screen filter blur-[120px] opacity-20 animate-float" style={{ animationDelay: '2s' }} />
+        
+        {/* Mesh Grid */}
+        <div className="absolute inset-0 opacity-[0.03] bg-[linear-gradient(rgba(255,255,255,0.2)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.2)_1px,transparent_1px)] bg-[size:40px_40px]" />
       </div>
 
-      {/* Progress Bar */}
-      {step !== "success" && (
-        <div className="px-6 pb-2">
-          <div className="max-w-[420px] mx-auto">
-            <div className="flex gap-1.5">
-              {Array.from({ length: totalSteps }).map((_, i) => (
-                <div
-                  key={i}
-                  className={`h-1 flex-1 rounded-full transition-all duration-500 ${i + 1 <= stepNumber ? "bg-[#d63384]" : "bg-white/20"
-                    }`}
-                />
-              ))}
+      {/* Auth Card Container */}
+      <div className="relative z-10 w-full max-w-[1000px] bg-white/10 backdrop-blur-2xl rounded-3xl border border-white/20 shadow-[0_20px_60px_rgba(0,0,0,0.3)] overflow-hidden flex flex-col md:flex-row min-h-[600px]">
+        
+        {/* Left Side - Brand & Info */}
+        <div className="w-full md:w-[45%] bg-gradient-to-br from-[#0f172a] to-[#1e293b] p-10 flex flex-col justify-between relative overflow-hidden">
+          {/* Decorative Pattern */}
+          <div className="absolute inset-0 opacity-10">
+            <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full">
+              <path d="M0,0 L100,100 M100,0 L0,100" stroke="white" strokeWidth="0.5" />
+            </svg>
+          </div>
+          
+          <div className="relative z-10">
+            <Image
+              src="https://muzigal.com/images/logo.svg"
+              width={140}
+              height={40}
+              alt="Muzigal"
+              className="brightness-0 invert mb-12"
+            />
+            
+            <h2 className="text-[28px] md:text-[32px] font-bold text-white leading-tight mb-4">
+              Start your musical journey today.
+            </h2>
+            <p className="text-[#94a3b8] text-[15px] leading-relaxed">
+              Join thousands of students learning from expert teachers worldwide. Flexible schedules, personalized lessons, and guaranteed progress.
+            </p>
+          </div>
+
+          <div className="relative z-10 mt-12 md:mt-0">
+            <div className="flex items-center gap-4 bg-white/5 border border-white/10 rounded-2xl p-4 backdrop-blur-md">
+              <div className="flex -space-x-2 shrink-0">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="w-8 h-8 rounded-full border-2 border-[#1e293b] bg-gradient-to-br from-[#e11d73] to-[#8b5cf6] flex items-center justify-center text-[10px] font-bold text-white">
+                    {String.fromCharCode(64 + i)}
+                  </div>
+                ))}
+              </div>
+              <div>
+                <p className="text-white text-[13px] font-medium">Join 10,000+ students</p>
+                <div className="flex text-[#f59e0b] text-[10px] mt-0.5">
+                  ★★★★★
+                </div>
+              </div>
             </div>
-            <p className="text-white/50 text-[12px] mt-1.5">Step {stepNumber} of {totalSteps}</p>
           </div>
         </div>
-      )}
 
-      {/* Card */}
-      <div className="flex-1 flex items-start justify-center px-4 py-8">
-        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[420px] p-8">
-
-          {/* STEP 1: Phone */}
-          {step === "phone" && (
-            <div>
-              <h2 className="text-[24px] font-bold text-[#132742] mb-1">Welcome to Muzigal</h2>
-              <p className="text-[#6b7280] text-[14px] mb-8">Enter your mobile number to get started</p>
-
-              <label className="text-[13px] font-semibold text-[#132742] block mb-2">Mobile Number</label>
-              <div className="flex gap-2 mb-6">
-                <div className="relative">
-                  <select
-                    value={countryCode.code}
-                    onChange={(e) => setCountryCode(countryCodes.find((c) => c.code === e.target.value) || countryCodes[0])}
-                    className="appearance-none border border-[#e0e0e0] rounded-lg pl-3 pr-7 py-3 text-[14px] text-[#132742] bg-white focus:outline-none focus:border-[#d63384] min-w-[90px]"
-                  >
-                    {countryCodes.map((c) => (
-                      <option key={c.code} value={c.code}>{c.flag} {c.code}</option>
-                    ))}
-                  </select>
-                  <ChevronRight size={13} className="absolute right-2 top-1/2 -translate-y-1/2 text-[#6b7280] rotate-90 pointer-events-none" />
-                </div>
-                <input
-                  type="tel"
-                  placeholder="Enter mobile number"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
-                  className="flex-1 border border-[#e0e0e0] rounded-lg px-4 py-3 text-[15px] text-[#132742] focus:outline-none focus:border-[#d63384]"
-                />
+        {/* Right Side - Forms */}
+        <div className="w-full md:w-[55%] bg-white p-8 md:p-12 relative flex flex-col">
+          
+          {/* Step 1: Login / Register Basic Info */}
+          {step === 1 && (
+            <div className="animate-fade-in flex flex-col h-full">
+              <div className="mb-8">
+                <h3 className="text-[24px] font-bold text-[#0f172a] mb-2">
+                  {mode === "login" ? "Welcome back" : "Create an account"}
+                </h3>
+                <p className="text-[#64748b] text-[14px]">
+                  {mode === "login" 
+                    ? "Enter your phone number to access your account." 
+                    : "Fill in your details to get started."}
+                </p>
               </div>
 
-              <button
-                onClick={handlePhoneSubmit}
-                disabled={phone.length < 10 || loading}
-                className="w-full bg-[#d63384] hover:bg-[#b5296e] disabled:bg-[#f0a8c8] text-white font-bold py-3.5 rounded-xl text-[16px] transition-colors"
-              >
-                {loading ? "Checking..." : "Continue"}
-              </button>
-
-              <p className="text-[12px] text-[#6b7280] text-center mt-4">
-                By continuing, you agree to our{" "}
-                <a href="#" className="text-[#d63384] hover:underline">Terms</a> &{" "}
-                <a href="#" className="text-[#d63384] hover:underline">Privacy Policy</a>
-              </p>
-            </div>
-          )}
-
-          {/* STEP 2: Profile */}
-          {step === "profile" && (
-            <div>
-              <h2 className="text-[24px] font-bold text-[#132742] mb-1">Create your profile</h2>
-              <p className="text-[#6b7280] text-[14px] mb-7">Tell us a little about yourself</p>
-
-              <div className="space-y-4 mb-6">
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-[12px] font-semibold text-[#132742] block mb-1.5">First Name</label>
+              <form onSubmit={handleAuth} className="space-y-4 flex-grow">
+                {mode === "register" && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-[13px] font-semibold text-[#0f172a]">First Name</label>
+                      <input
+                        type="text"
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                        className="w-full h-[48px] px-4 rounded-xl border border-[#e2e8f0] bg-[#f8fafc] text-[14px] text-[#0f172a] focus:bg-white focus:border-[#e11d73] focus:ring-4 focus:ring-[#e11d73]/10 transition-all outline-none"
+                        placeholder="John"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[13px] font-semibold text-[#0f172a]">Last Name</label>
+                      <input
+                        type="text"
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                        className="w-full h-[48px] px-4 rounded-xl border border-[#e2e8f0] bg-[#f8fafc] text-[14px] text-[#0f172a] focus:bg-white focus:border-[#e11d73] focus:ring-4 focus:ring-[#e11d73]/10 transition-all outline-none"
+                        placeholder="Doe"
+                        required
+                      />
+                    </div>
+                  </div>
+                )}
+                
+                {mode === "register" && (
+                  <div className="space-y-1.5">
+                    <label className="text-[13px] font-semibold text-[#0f172a]">Email Address (Optional)</label>
                     <input
-                      type="text"
-                      placeholder="First name"
-                      value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)}
-                      className="w-full border border-[#e0e0e0] rounded-lg px-3 py-2.5 text-[14px] text-[#132742] focus:outline-none focus:border-[#d63384]"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full h-[48px] px-4 rounded-xl border border-[#e2e8f0] bg-[#f8fafc] text-[14px] text-[#0f172a] focus:bg-white focus:border-[#e11d73] focus:ring-4 focus:ring-[#e11d73]/10 transition-all outline-none"
+                      placeholder="you@example.com"
                     />
                   </div>
-                  <div>
-                    <label className="text-[12px] font-semibold text-[#132742] block mb-1.5">Last Name</label>
-                    <input
-                      type="text"
-                      placeholder="Last name"
-                      value={lastName}
-                      onChange={(e) => setLastName(e.target.value)}
-                      className="w-full border border-[#e0e0e0] rounded-lg px-3 py-2.5 text-[14px] text-[#132742] focus:outline-none focus:border-[#d63384]"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="text-[12px] font-semibold text-[#132742] block mb-1.5">Email Address</label>
+                )}
+                
+                <div className="space-y-1.5">
+                  <label className="text-[13px] font-semibold text-[#0f172a]">Phone Number</label>
                   <input
-                    type="email"
-                    placeholder="you@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full border border-[#e0e0e0] rounded-lg px-3 py-2.5 text-[14px] text-[#132742] focus:outline-none focus:border-[#d63384]"
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className="w-full h-[48px] px-4 rounded-xl border border-[#e2e8f0] bg-[#f8fafc] text-[14px] text-[#0f172a] focus:bg-white focus:border-[#e11d73] focus:ring-4 focus:ring-[#e11d73]/10 transition-all outline-none"
+                    placeholder="9876543210"
+                    required
                   />
                 </div>
+
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full h-[48px] mt-6 bg-gradient-to-r from-[#e11d73] to-[#be185d] text-white rounded-xl font-bold text-[14px] flex items-center justify-center gap-2 hover:shadow-[0_8px_20px_rgba(225,29,115,0.25)] transition-all active:scale-[0.98] disabled:opacity-70 disabled:pointer-events-none group"
+                >
+                  {isLoading ? (
+                    <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      {mode === "login" ? "Sign In" : "Continue"}
+                      <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </>
+                  )}
+                </button>
+              </form>
+
+              <div className="mt-8 text-center text-[13px] text-[#64748b]">
+                {mode === "login" ? (
+                  <>Don&apos;t have an account? <button onClick={() => setMode("register")} className="text-[#e11d73] font-bold hover:underline">Sign up</button></>
+                ) : (
+                  <>Already have an account? <button onClick={() => setMode("login")} className="text-[#e11d73] font-bold hover:underline">Sign in</button></>
+                )}
               </div>
-
-              <button
-                onClick={async () => {
-                  if (firstName && lastName && email) {
-                    setLoading(true);
-                    try {
-                      const res = await fetch('/api/auth/register', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ phone, firstName, lastName, email })
-                      });
-
-                      if (res.ok) {
-                        await refreshUser();
-                        setStep("subject");
-                      } else {
-                        alert("Registration failed");
-                      }
-                    } catch (e) {
-                      console.error(e);
-                      alert("Error registering");
-                    } finally {
-                      setLoading(false);
-                    }
-                  }
-                }}
-                disabled={!firstName || !lastName || !email || loading}
-                className="w-full bg-[#d63384] hover:bg-[#b5296e] disabled:bg-[#f0a8c8] text-white font-bold py-3.5 rounded-xl text-[16px] transition-colors"
-              >
-                {loading ? "Registering..." : "Continue"}
-              </button>
             </div>
           )}
 
-          {/* STEP 3: Subject Selection */}
-          {step === "subject" && (
-            <div>
-              <h2 className="text-[24px] font-bold text-[#132742] mb-1">What do you want to learn?</h2>
-              <p className="text-[#6b7280] text-[14px] mb-6">Select one or more instruments</p>
+          {/* Step 2: Preferences (Register Only) */}
+          {step === 2 && (
+            <div className="animate-slide-in-right flex flex-col h-full">
+              <button 
+                onClick={() => setStep(1)}
+                className="w-8 h-8 rounded-full border border-[#e2e8f0] flex items-center justify-center text-[#64748b] hover:bg-[#f8fafc] hover:text-[#0f172a] transition-all mb-6"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
 
-              <div className="grid grid-cols-3 gap-3 mb-6">
+              <div className="mb-6">
+                <h3 className="text-[24px] font-bold text-[#0f172a] mb-2">What do you want to learn?</h3>
+                <p className="text-[#64748b] text-[14px]">Select your primary instrument to help us personalize your experience.</p>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-8 max-h-[300px] overflow-y-auto pr-2 scrollbar-hide">
                 {instruments.map((inst) => (
                   <button
-                    key={inst.name}
-                    onClick={() => toggleInstrument(inst.name)}
-                    className={`flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl border-2 transition-all ${selectedInstruments.includes(inst.name)
-                      ? "border-[#d63384] bg-[#fce4ef]"
-                      : "border-[#e0e0e0] bg-white hover:border-[#d63384]/50"
-                      }`}
+                    key={inst.id}
+                    type="button"
+                    onClick={() => setSelectedInstrument(inst.name)}
+                    className={`flex flex-col items-center justify-center p-4 rounded-2xl border transition-all duration-200 ${
+                      selectedInstrument === inst.name
+                        ? "border-[#e11d73] bg-[#fce7f3]/50 shadow-[0_4px_12px_rgba(225,29,115,0.1)] scale-[1.02]"
+                        : "border-[#e2e8f0] bg-white hover:border-[#cbd5e1] hover:bg-[#f8fafc]"
+                    }`}
                   >
-                    <span className="text-[24px]">{inst.icon}</span>
-                    <span className="text-[12px] font-semibold text-[#132742] text-center">{inst.name}</span>
-                    {selectedInstruments.includes(inst.name) && (
-                      <Check size={12} className="text-[#d63384]" />
-                    )}
+                    <span className="text-[28px] mb-2">{inst.icon}</span>
+                    <span className={`text-[12px] font-semibold text-center ${selectedInstrument === inst.name ? "text-[#e11d73]" : "text-[#64748b]"}`}>
+                      {inst.name}
+                    </span>
                   </button>
                 ))}
               </div>
 
-              <button
-                onClick={() => selectedInstruments.length > 0 && setStep("preferences")}
-                disabled={selectedInstruments.length === 0}
-                className="w-full bg-[#d63384] hover:bg-[#b5296e] disabled:bg-[#f0a8c8] text-white font-bold py-3.5 rounded-xl text-[16px] transition-colors"
-              >
-                Continue ({selectedInstruments.length} selected)
-              </button>
-            </div>
-          )}
-
-          {/* STEP 4: Preferences */}
-          {step === "preferences" && (
-            <div>
-              <h2 className="text-[24px] font-bold text-[#132742] mb-1">Your Preferences</h2>
-              <p className="text-[#6b7280] text-[14px] mb-6">Help us match you with the right teacher</p>
-
-              <div className="space-y-5 mb-6">
-                {/* Experience */}
-                <div>
-                  <label className="text-[13px] font-bold text-[#132742] block mb-2">Experience Level</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {experienceLevels.map((l) => (
-                      <button
-                        key={l}
-                        onClick={() => setSelectedLevel(l)}
-                        className={`py-2 px-3 rounded-lg border-2 text-[13px] font-medium transition-all ${selectedLevel === l ? "border-[#d63384] bg-[#fce4ef] text-[#d63384]" : "border-[#e0e0e0] text-[#132742] hover:border-[#d63384]/50"
-                          }`}
-                      >
-                        {l}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Language */}
-                <div>
-                  <label className="text-[13px] font-bold text-[#132742] block mb-2">Preferred Language</label>
-                  <div className="flex flex-wrap gap-2">
-                    {teachingLanguages.map((l) => (
-                      <button
-                        key={l}
-                        onClick={() => setSelectedLanguage(l)}
-                        className={`py-1.5 px-3 rounded-full border text-[13px] font-medium transition-all ${selectedLanguage === l ? "border-[#d63384] bg-[#fce4ef] text-[#d63384]" : "border-[#e0e0e0] text-[#132742] hover:border-[#d63384]/50"
-                          }`}
-                      >
-                        {l}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Age */}
-                <div>
-                  <label className="text-[13px] font-bold text-[#132742] block mb-2">Age Group</label>
-                  <div className="flex flex-wrap gap-2">
-                    {ageGroups.map((a) => (
-                      <button
-                        key={a}
-                        onClick={() => setSelectedAge(a)}
-                        className={`py-1.5 px-3 rounded-full border text-[13px] font-medium transition-all ${selectedAge === a ? "border-[#d63384] bg-[#fce4ef] text-[#d63384]" : "border-[#e0e0e0] text-[#132742] hover:border-[#d63384]/50"
-                          }`}
-                      >
-                        {a}
-                      </button>
-                    ))}
-                  </div>
+              <div className="space-y-3 mb-8">
+                <label className="text-[13px] font-semibold text-[#0f172a]">Your Experience Level</label>
+                <div className="flex gap-2 bg-[#f8fafc] p-1 rounded-xl border border-[#e2e8f0]">
+                  {['Beginner', 'Intermediate', 'Advanced'].map((level) => (
+                    <button
+                      key={level}
+                      onClick={() => setSkillLevel(level)}
+                      className={`flex-1 py-2 rounded-lg text-[13px] font-semibold transition-all ${
+                        skillLevel === level 
+                          ? "bg-white text-[#0f172a] shadow-sm" 
+                          : "text-[#64748b] hover:text-[#0f172a]"
+                      }`}
+                    >
+                      {level}
+                    </button>
+                  ))}
                 </div>
               </div>
 
               <button
-                onClick={() => (selectedLevel && selectedLanguage && selectedAge) && setStep("success")}
-                disabled={!selectedLevel || !selectedLanguage || !selectedAge}
-                className="w-full bg-[#d63384] hover:bg-[#b5296e] disabled:bg-[#f0a8c8] text-white font-bold py-3.5 rounded-xl text-[16px] transition-colors"
+                onClick={handleCompleteRegistration}
+                disabled={isLoading || !selectedInstrument || !skillLevel}
+                className="w-full h-[48px] mt-auto bg-gradient-to-r from-[#e11d73] to-[#be185d] text-white rounded-xl font-bold text-[14px] flex items-center justify-center gap-2 hover:shadow-[0_8px_20px_rgba(225,29,115,0.25)] transition-all active:scale-[0.98] disabled:opacity-70 disabled:pointer-events-none"
               >
-                Find My Teacher
+                {isLoading ? (
+                  <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  "Complete Registration"
+                )}
               </button>
             </div>
           )}
 
-          {/* SUCCESS */}
-          {step === "success" && (
-            <div className="text-center py-4">
-              <div className="w-20 h-20 bg-[#d1fae5] rounded-full flex items-center justify-center mx-auto mb-6">
-                <Check size={36} className="text-[#10b981]" />
+          {/* Step 3: Success State */}
+          {step === 3 && (
+            <div className="animate-scale-in flex flex-col items-center justify-center h-full text-center py-12">
+              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#10b981] to-[#059669] flex items-center justify-center mb-6 shadow-[0_8px_30px_rgba(16,185,129,0.3)]">
+                <Check className="w-10 h-10 text-white" strokeWidth={3} />
               </div>
-              <h2 className="text-[26px] font-bold text-[#132742] mb-2">You&apos;re all set, {firstName}!</h2>
-              <p className="text-[#6b7280] text-[15px] mb-3">
-                We&apos;re matching you with the best {selectedInstruments.join(", ")} teachers
+              <h3 className="text-[28px] font-bold text-[#0f172a] mb-3">You&apos;re all set!</h3>
+              <p className="text-[#64748b] text-[15px] max-w-[280px] mx-auto">
+                Your account has been created successfully. Redirecting you to the platform...
               </p>
-              <div className="bg-[#f8f9fb] rounded-xl p-4 mb-8 text-left space-y-2">
-                <div className="flex justify-between text-[13px]">
-                  <span className="text-[#6b7280]">Level:</span>
-                  <span className="font-semibold text-[#132742]">{selectedLevel}</span>
-                </div>
-                <div className="flex justify-between text-[13px]">
-                  <span className="text-[#6b7280]">Language:</span>
-                  <span className="font-semibold text-[#132742]">{selectedLanguage}</span>
-                </div>
-                <div className="flex justify-between text-[13px]">
-                  <span className="text-[#6b7280]">Age Group:</span>
-                  <span className="font-semibold text-[#132742]">{selectedAge}</span>
-                </div>
+              
+              <div className="mt-8 flex gap-2">
+                <span className="w-2 h-2 rounded-full bg-[#e11d73] animate-bounce" style={{ animationDelay: "0ms" }} />
+                <span className="w-2 h-2 rounded-full bg-[#8b5cf6] animate-bounce" style={{ animationDelay: "150ms" }} />
+                <span className="w-2 h-2 rounded-full bg-[#10b981] animate-bounce" style={{ animationDelay: "300ms" }} />
               </div>
-              <Link
-                href="/learn-music"
-                className="block w-full bg-[#d63384] hover:bg-[#b5296e] text-white font-bold py-3.5 rounded-xl text-[16px] transition-colors"
-              >
-                Browse Matched Teachers
-              </Link>
-              <Link href="/" className="block mt-3 text-[14px] text-[#6b7280] hover:text-[#132742]">
-                Back to Home
-              </Link>
             </div>
           )}
+
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <React.Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#f8fafc]"><div className="w-8 h-8 border-4 border-[#e11d73] border-t-transparent rounded-full animate-spin" /></div>}>
+      <LoginForm />
+    </React.Suspense>
   );
 }
