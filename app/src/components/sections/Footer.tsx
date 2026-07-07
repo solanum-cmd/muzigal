@@ -1,173 +1,129 @@
 "use client";
 
-import React from 'react';
-import Image from 'next/image';
-import { Facebook, Instagram, Linkedin, Youtube, Globe } from 'lucide-react';
+import React from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { Facebook, Twitter, Instagram, Youtube, Linkedin, Mail, MapPin, Phone } from "lucide-react";
 
-const Footer = () => {
-  const footerLinks = {
-    topLinks: [
-      { label: 'About Us', href: '#' },
-      { label: "Founder's Message", href: '#' },
-      { label: 'Join the Student Community', href: '/login' },
-      { label: 'Need help? Contact us', href: '#' },
-      { label: 'Muzigal Pro-Academy', href: '#' },
-    ],
-    blog: [
-      { label: 'Things To Consider When You Begin Learning The Piano', href: '#' },
-      { label: 'The basics of Carnatic Vocals', href: '#' },
-      { label: 'Online Music Lessons – The New Way To Effective Learning', href: '#' },
-      { label: 'Correct Posture For Playing Piano', href: '#' },
-      { label: 'Choosing the right kind of Guitar', href: '#' },
-    ],
-    courses: [
-      { label: 'Beginner Guitar', href: '/learn-music?q=Guitar' },
-      { label: 'Beginner Piano', href: '/learn-music?q=Piano' },
-      { label: 'Beginner Keyboard', href: '/learn-music?q=Keyboard' },
-      { label: 'Beginner Drums', href: '/learn-music?q=Drums' },
-      { label: 'Beginner Carnatic Vocals', href: '/learn-music?q=Carnatic%20Vocals' },
-      { label: 'Beginner Hindustani Vocals', href: '/learn-music?q=Hindustani%20Vocals' },
-    ],
-    partner: [
-      { label: 'Muzigal Academy Franchise', href: '/find-an-academy' },
-      { label: 'Muzigal for Schools', href: '#' },
-      { label: 'Muzigal for Corporates', href: '#' },
-      { label: 'Muzigal for Gated Communities', href: '#' },
-      { label: 'Trade Kiosk Franchise', href: '#' },
-      { label: 'Teach for Muzigal', href: '#' },
-      { label: 'Careers at Muzigal', href: '#' },
-    ],
-    faq: [
-      { label: 'How do I choose a Teacher on Muzigal?', href: '#' },
-      { label: 'How many trials can I take for a specified instrument?', href: '#' },
-      { label: 'How does lesson recording work?', href: '#' },
-      { label: 'How do I showcase my talent to Muzigal community and get feedback?', href: '#' },
-    ],
-  };
+export default function Footer() {
+  const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="w-full bg-[#132742] text-white pt-[60px] pb-[40px] font-sans">
-      <div className="max-w-[1200px] mx-auto px-6">
-        {/* Top Horizontal Links */}
-        <div className="flex flex-wrap items-center justify-between pb-8 border-b border-white/10 gap-y-4">
-          {footerLinks.topLinks.map((link, idx) => (
-            <a
-              key={idx}
-              href={link.href}
-              className="text-[14px] font-semibold hover:text-[#d63384] transition-colors"
-            >
-              {link.label}
-            </a>
-          ))}
-        </div>
+    <footer className="bg-[#0f172a] text-white relative overflow-hidden">
+      {/* Top Gradient Border */}
+      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#e11d73] via-[#8b5cf6] to-[#e11d73]" />
 
-        {/* Multi-column Links */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 py-10">
-          {/* Section 1: Blog */}
-          <div>
-            <h4 className="text-[12px] font-bold uppercase tracking-wider text-white/50 mb-6">Muzigal Blog</h4>
-            <ul className="space-y-4">
-              {footerLinks.blog.map((link, idx) => (
-                <li key={idx}>
-                  <a href={link.href} className="text-[14px] leading-[1.4] hover:text-[#d63384] transition-colors block">
-                    {link.label}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
+      {/* Decorative Background Elements */}
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#e11d73]/5 rounded-full blur-[100px] pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-[#8b5cf6]/5 rounded-full blur-[100px] pointer-events-none" />
 
-          {/* Section 2: Featured Courses */}
-          <div>
-            <h4 className="text-[12px] font-bold uppercase tracking-wider text-white/50 mb-6">Featured Courses</h4>
-            <ul className="space-y-4">
-              {footerLinks.courses.map((link, idx) => (
-                <li key={idx}>
-                  <a href={link.href} className="text-[14px] hover:text-[#d63384] transition-colors block">
-                    {link.label}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Section 3: Partner With Muzigal */}
-          <div>
-            <h4 className="text-[12px] font-bold uppercase tracking-wider text-white/50 mb-6">Partner With Muzigal</h4>
-            <ul className="space-y-4">
-              {footerLinks.partner.map((link, idx) => (
-                <li key={idx}>
-                  <a href={link.href} className="text-[14px] hover:text-[#d63384] transition-colors block">
-                    {link.label}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Section 4: FAQ */}
-          <div>
-            <h4 className="text-[12px] font-bold uppercase tracking-wider text-white/50 mb-6">FAQ</h4>
-            <ul className="space-y-4">
-              {footerLinks.faq.map((link, idx) => (
-                <li key={idx}>
-                  <a href={link.href} className="text-[14px] leading-[1.4] hover:text-[#d63384] transition-colors block">
-                    {link.label}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-
-        {/* Bottom Section */}
-        <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-8">
-          <div className="flex flex-col items-center md:items-start">
-            <div className="flex items-center gap-4 mb-4">
-              <a href="/">
-                <Image
-                  src="https://muzigal.com/images/logo.svg"
-                  alt="Muzigal"
-                  width={135}
-                  height={40}
-                  className="brightness-0 invert"
-                />
-              </a>
-              <div className="flex items-center gap-1.5 px-2 py-1 bg-white/5 rounded border border-white/10">
-                <Globe size={16} />
-                <span className="text-[14px]">🇮🇳</span>
-              </div>
-            </div>
-            <p className="text-[12px] text-white/50">
-              © 2025, Muzigal Edutech Pvt. Ltd. All Rights Reserved.
+      <div className="container mx-auto max-w-[1200px] px-6 pt-20 pb-8 relative z-10">
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 lg:gap-8 mb-16">
+          {/* Brand & About */}
+          <div className="lg:col-span-4 flex flex-col space-y-6">
+            <Link href="/" className="inline-block">
+              <Image
+                src="https://muzigal.com/images/logo.svg"
+                width={140}
+                height={40}
+                alt="Muzigal"
+                className="brightness-0 invert opacity-90"
+              />
+            </Link>
+            <p className="text-[#94a3b8] text-[15px] leading-relaxed max-w-[320px]">
+              Muzigal is a global platform connecting students with expert music teachers for personalized, high-quality music education.
             </p>
+            
+            <div className="flex gap-4 pt-2">
+              <SocialLink href="#" icon={<Facebook size={18} />} />
+              <SocialLink href="#" icon={<Twitter size={18} />} />
+              <SocialLink href="#" icon={<Instagram size={18} />} />
+              <SocialLink href="#" icon={<Youtube size={18} />} />
+              <SocialLink href="#" icon={<Linkedin size={18} />} />
+            </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            <a href="#" className="w-10 h-10 flex items-center justify-center bg-white/10 rounded-full hover:bg-[#d63384] transition-all">
-              <Instagram size={20} />
-            </a>
-            <a href="#" className="w-10 h-10 flex items-center justify-center bg-white/10 rounded-full hover:bg-[#d63384] transition-all">
-              <Facebook size={20} />
-            </a>
-            <a href="#" className="w-10 h-10 flex items-center justify-center bg-white/10 rounded-full hover:bg-[#d63384] transition-all">
-              <Linkedin size={20} />
-            </a>
-            <a href="#" className="w-10 h-10 flex items-center justify-center bg-white/10 rounded-full hover:bg-[#d63384] transition-all">
-              <Youtube size={20} />
-            </a>
+          {/* Quick Links */}
+          <div className="lg:col-span-2">
+            <h4 className="text-white font-bold text-[16px] mb-6">Quick Links</h4>
+            <ul className="space-y-4">
+              <FooterLink href="/find-an-academy">Find an Academy</FooterLink>
+              <FooterLink href="/learn-music">Find a Teacher</FooterLink>
+              <FooterLink href="https://shop.muzigal.com/">Shop Instruments</FooterLink>
+              <FooterLink href="/about">About Us</FooterLink>
+              <FooterLink href="/contact">Contact</FooterLink>
+            </ul>
           </div>
 
-          <div className="flex flex-wrap justify-center gap-x-8 gap-y-2">
-            <a href="#" className="text-[12px] font-semibold hover:text-[#d63384]">Press Kit</a>
-            <a href="#" className="text-[12px] font-semibold hover:text-[#d63384]">Terms & Conditions</a>
-            <a href="#" className="text-[12px] font-semibold hover:text-[#d63384]">Sitemap</a>
-            <a href="#" className="text-[12px] font-semibold hover:text-[#d63384]">Privacy Policy</a>
+          {/* Resources */}
+          <div className="lg:col-span-3">
+            <h4 className="text-white font-bold text-[16px] mb-6">Resources</h4>
+            <ul className="space-y-4">
+              <FooterLink href="/blog">Blog</FooterLink>
+              <FooterLink href="https://muzigal.com/become-a-teacher">Become a Teacher</FooterLink>
+              <FooterLink href="https://landing.muzigal.com/mz/franchise">Partner with Us</FooterLink>
+              <FooterLink href="/faqs">FAQs</FooterLink>
+            </ul>
+          </div>
+
+          {/* Contact Info */}
+          <div className="lg:col-span-3">
+            <h4 className="text-white font-bold text-[16px] mb-6">Contact Us</h4>
+            <ul className="space-y-5">
+              <li className="flex items-start gap-3 text-[#94a3b8] text-[14px]">
+                <MapPin size={18} className="text-[#e11d73] shrink-0 mt-0.5" />
+                <span className="leading-relaxed">Level 1, T-Hub, Knowledge City, Hyderabad, 500081</span>
+              </li>
+              <li className="flex items-center gap-3 text-[#94a3b8] text-[14px]">
+                <Phone size={18} className="text-[#e11d73] shrink-0" />
+                <span>+91 9000 000 000</span>
+              </li>
+              <li className="flex items-center gap-3 text-[#94a3b8] text-[14px]">
+                <Mail size={18} className="text-[#e11d73] shrink-0" />
+                <a href="mailto:support@muzigal.com" className="hover:text-white transition-colors">support@muzigal.com</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        {/* Bottom Bar */}
+        <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-4">
+          <p className="text-[#64748b] text-[13px]">
+            &copy; {currentYear} Muzigal. All rights reserved.
+          </p>
+          <div className="flex items-center gap-6 text-[13px] text-[#64748b]">
+            <Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
+            <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
           </div>
         </div>
       </div>
     </footer>
   );
-};
+}
 
-export default Footer;
+function SocialLink({ href, icon }: { href: string; icon: React.ReactNode }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-[#94a3b8] hover:bg-gradient-to-br hover:from-[#e11d73] hover:to-[#be185d] hover:text-white transition-all duration-300"
+    >
+      {icon}
+    </a>
+  );
+}
+
+function FooterLink({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <li>
+      <Link
+        href={href}
+        className="text-[#94a3b8] text-[14px] hover:text-white hover:translate-x-1 inline-block transition-all duration-300"
+      >
+        {children}
+      </Link>
+    </li>
+  );
+}
